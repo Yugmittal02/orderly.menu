@@ -1,411 +1,307 @@
-import React, { useState, useEffect } from "react";
-import { useCart } from "../context/CartContext";
-import { useAuth } from "../context/AuthContext";
-import { useNavigate } from "react-router-dom";
-import { getFeeSettings } from "../services/api";
+import React, { useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useCart } from '../context/CartContext';
+import { useAuth } from '../context/AuthContext';
+import { getFeeSettings } from '../services/api';
 import {
-  FaTrash,
-  FaArrowLeft,
-  FaMinus,
-  FaPlus,
-  FaMapMarkerAlt,
-  FaShoppingBag,
-  FaTruck,
-  FaEdit,
-} from "react-icons/fa";
-import CustomerEntry from "../components/CustomerEntry";
-import LocationPicker from "../components/LocationPicker";
-import CustomizeModal from "../components/CustomizeModal";
-import Footer from "../components/Footer";
+  FaArrowLeft, FaTruck, FaUtensils, FaMinus, FaPlus, FaTrash, FaMapMarkerAlt,
+  FaEdit, FaShoppingBag, FaClock, FaShieldAlt, FaPercent, FaGift, FaTag
+} from 'react-icons/fa';
 
 const Cart = () => {
-  const { cart, total, updateQuantity, removeFromCart } = useCart();
-  const { customer, logoutCustomer } = useAuth();
   const navigate = useNavigate();
-  const [orderType, setOrderType] = useState("Dine-in");
-  const [showCustomerEntry, setShowCustomerEntry] = useState(false);
-  const [showLocationPicker, setShowLocationPicker] = useState(false);
-  const [deliveryAddress, setDeliveryAddress] = useState(null);
-  const [feeSettings, setFeeSettings] = useState({
-    platformFee: 0.98,
-    taxRate: 5,
-  });
-  const [editingItem, setEditingItem] = useState(null);
+  const { cart, removeFromCart, updateQuantity, total, clearCart } = useCart();
+  const { customer } = useAuth();
+  const [orderType, setOrderType] = useState('Delivery');
+  const [selectedAddressIndex, setSelectedAddressIndex] = useState(0);
+  const [feeSettings, setFeeSettings] = useState({ deliveryFee: 30, minOrderForFreeDelivery: 299 });
 
-  // Load fee settings on mount
   useEffect(() => {
-    loadFeeSettings();
+    getFeeSettings().then(res => {
+      if (res.data) setFeeSettings(res.data);
+    }).catch(() => { });
   }, []);
 
-  const loadFeeSettings = async () => {
-    try {
-      const { data } = await getFeeSettings();
-      setFeeSettings(data);
-    } catch (error) {
-      console.error("Error loading fee settings:", error);
-    }
-  };
+  const addresses = useMemo(() => customer?.addresses || [], [customer]);
+  const selectedAddress = addresses[selectedAddressIndex];
 
-  const subtotal = total;
-  const estimatedTotal = subtotal + feeSettings.platformFee;
-
-  // Navigate to payment page
-  const proceedToPayment = () => {
-    navigate("/payment", {
-      state: {
-        orderType,
-        deliveryAddress,
-      },
-    });
-  };
+  const deliveryFee = orderType === 'Delivery'
+    ? (total >= feeSettings.minOrderForFreeDelivery ? 0 : feeSettings.deliveryFee)
+    : 0;
+  const grandTotal = total + deliveryFee;
 
   const handleCheckout = () => {
     if (cart.length === 0) return;
 
-    if (!customer || !customer.name || !customer.phone) {
-      setShowCustomerEntry(true);
+    // Check if user is logged in
+    if (!customer) {
+      // Redirect to login with return path to cart
+      navigate('/login', { state: { from: '/cart' } });
       return;
     }
 
-    // Check for delivery address if order type is Delivery
-    if (orderType === "Delivery" && !deliveryAddress) {
-      setShowLocationPicker(true);
-      return;
-    }
-
-    // Navigate to payment page
-    proceedToPayment();
+    // Navigate to payment page - address can be collected there if needed
+    navigate('/payment', {
+      state: {
+        orderType,
+        deliveryAddress: orderType === 'Delivery' ? selectedAddress : null,
+        subtotal: Number(total) || 0,
+        deliveryFee: Number(deliveryFee) || 0,
+        grandTotal: Number(grandTotal) || 0
+      }
+    });
   };
 
-  return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-orange-50/30 pb-32">
-      {/* Header */}
-      <header className="bg-white/95 backdrop-blur-xl px-4 py-4 shadow-sm border-b border-gray-100 flex justify-between items-center sticky top-0 z-10 safe-area-top">
-        <div className="flex items-center gap-4">
-          <button
-            onClick={() => navigate(-1)}
-            className="w-12 h-12 bg-gray-100 rounded-2xl flex items-center justify-center text-gray-600 active:scale-95 active:bg-gray-200 transition-all"
-          >
-            <FaArrowLeft size={18} />
-          </button>
-          <div>
-            <h1 className="text-xl font-black text-gray-800">Your Cart</h1>
-            <p className="text-sm text-gray-500">
-              {cart.length} item{cart.length !== 1 ? "s" : ""}
-            </p>
-          </div>
+  if (cart.length === 0) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center p-6 animate-fade-in" style={{ background: '#FFFFFF' }}>
+        <div className="w-32 h-32 rounded-full flex items-center justify-center mb-6"
+          style={{ background: 'linear-gradient(135deg, #FEF3E2 0%, #FDE8CC 100%)', border: '3px solid #E8E3DB' }}>
+          <FaShoppingBag size={48} color="#D4700A" />
         </div>
-        {customer && (
-          <div className="flex flex-col items-end">
-            <div className="text-[10px] uppercase font-bold text-gray-400 tracking-wider mb-0.5">
-              Ordering as
-            </div>
-            <div className="flex items-center gap-2 bg-orange-50 pl-3 pr-1 py-1 rounded-lg border border-orange-100">
-              <span className="text-xs font-bold text-orange-800 max-w-[80px] truncate">
-                {customer.name}
-              </span>
-              <button
-                onClick={logoutCustomer}
-                className="w-5 h-5 flex items-center justify-center bg-white rounded-md text-orange-500 shadow-sm"
-              >
-                <span className="text-[10px] font-bold">✕</span>
-              </button>
-            </div>
-          </div>
-        )}
+        <h2 className="text-2xl font-bold mb-2" style={{ color: '#1C1C1C' }}>Your cart is empty</h2>
+        <p className="mb-8 text-center" style={{ color: '#7E7E7E' }}>Add some delicious items to get started!</p>
+        <button
+          onClick={() => navigate('/menu')}
+          className="px-8 py-4 rounded-2xl text-white font-bold"
+          style={{ background: 'linear-gradient(135deg, #D4700A 0%, #E8923A 100%)', boxShadow: '0 8px 24px rgba(212, 112, 10, 0.3)' }}
+        >
+          🍰 Browse Menu
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen pb-40" style={{ background: '#FFFFFF' }}>
+      {/* Header */}
+      <header className="sticky top-0 z-10 px-4 py-4 flex justify-between items-center"
+        style={{ background: '#FFFFFF', borderBottom: '3px solid #D4700A', boxShadow: '0 2px 10px rgba(0,0,0,0.05)' }}>
+        <button onClick={() => navigate(-1)} className="w-10 h-10 rounded-full flex items-center justify-center"
+          style={{ background: 'rgba(212, 112, 10, 0.1)' }}>
+          <FaArrowLeft size={18} color="#D4700A" />
+        </button>
+        <div className="flex items-center gap-2">
+          <span className="text-2xl">🛒</span>
+          <h1 className="text-xl font-script" style={{ color: '#D4700A' }}>Your Cart</h1>
+        </div>
+        <div className="flex items-center gap-1 px-3 py-1.5 rounded-full"
+          style={{ background: 'rgba(212, 112, 10, 0.1)' }}>
+          <FaShoppingBag size={12} color="#D4700A" />
+          <span className="text-sm font-bold" style={{ color: '#D4700A' }}>{cart.length}</span>
+        </div>
       </header>
 
-      {/* Order Type Toggle - Large Touch */}
+      {/* Order Type Toggle */}
       <div className="mx-4 mt-4">
-        <div className="bg-white p-1.5 rounded-2xl flex shadow-sm border border-gray-100">
-          {["Dine-in", "Takeaway", "Delivery"].map((type) => (
-            <button
-              key={type}
-              onClick={() => {
-                setOrderType(type);
-                // Clear delivery address if switching away from Delivery
-                if (type !== "Delivery") {
-                  setDeliveryAddress(null);
-                }
+        <div className="p-1.5 rounded-2xl flex gap-1"
+          style={{ background: 'white', border: '2px solid #E8E3DB', boxShadow: '0 4px 16px rgba(28, 28, 28, 0.08)' }}>
+          <button
+            onClick={() => setOrderType('Delivery')}
+            className={`flex-1 py-3 rounded-xl font-semibold flex flex-col items-center gap-1 transition-all ${orderType === 'Delivery' ? 'text-white' : ''}`}
+            style={orderType === 'Delivery' ? { background: 'linear-gradient(135deg, #D4700A 0%, #E8923A 100%)', boxShadow: '0 4px 12px rgba(212, 112, 10, 0.3)' } : { color: '#7E7E7E' }}
+          >
+            <FaTruck size={18} />
+            <span className="text-xs">Delivery</span>
+            {orderType === 'Delivery' && deliveryFee === 0 && <span className="text-[9px] px-1.5 py-0.5 rounded bg-green-500">FREE</span>}
+          </button>
+          <button
+            onClick={() => setOrderType('Takeaway')}
+            className={`flex-1 py-3 rounded-xl font-semibold flex flex-col items-center gap-1 transition-all ${orderType === 'Takeaway' ? 'text-white' : ''}`}
+            style={orderType === 'Takeaway' ? { background: 'linear-gradient(135deg, #D4700A 0%, #E8923A 100%)', boxShadow: '0 4px 12px rgba(212, 112, 10, 0.3)' } : { color: '#7E7E7E' }}
+          >
+            <FaShoppingBag size={18} />
+            <span className="text-xs">Takeaway</span>
+          </button>
+          <button
+            onClick={() => setOrderType('Dine-in')}
+            className={`flex-1 py-3 rounded-xl font-semibold flex flex-col items-center gap-1 transition-all ${orderType === 'Dine-in' ? 'text-white' : ''}`}
+            style={orderType === 'Dine-in' ? { background: 'linear-gradient(135deg, #D4700A 0%, #E8923A 100%)', boxShadow: '0 4px 12px rgba(212, 112, 10, 0.3)' } : { color: '#7E7E7E' }}
+          >
+            <FaUtensils size={18} />
+            <span className="text-xs">Dine-in</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Free Delivery Progress */}
+      {orderType === 'Delivery' && total < feeSettings.minOrderForFreeDelivery && (
+        <div className="mx-4 mt-4 p-4 rounded-2xl animate-fade-in"
+          style={{ background: 'linear-gradient(135deg, #FEF3E2 0%, #FDE8CC 100%)', border: '2px solid #D4700A' }}>
+          <div className="flex items-center gap-2 mb-2">
+            <FaGift color="#D4700A" />
+            <span className="text-sm font-semibold" style={{ color: '#D4700A' }}>
+              Add ₹{(Number(feeSettings.minOrderForFreeDelivery) - Number(total) || 0).toFixed(0)} more for FREE Delivery!
+            </span>
+          </div>
+          <div className="h-2 rounded-full overflow-hidden" style={{ background: '#E8E3DB' }}>
+            <div
+              className="h-full rounded-full transition-all duration-500"
+              style={{
+                width: `${(total / feeSettings.minOrderForFreeDelivery) * 100}%`,
+                background: 'linear-gradient(90deg, #D4700A 0%, #D4B87A 100%)'
               }}
-              className={`flex-1 h-12 rounded-xl text-sm font-bold transition-all active:scale-95 ${
-                orderType === type
-                  ? "bg-gradient-to-r from-orange-500 to-orange-600 text-white shadow-lg shadow-orange-200/50"
-                  : "text-gray-500 active:bg-gray-50"
-              }`}
-            >
-              {type}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Delivery Address Selection */}
-      {orderType === "Delivery" && (
-        <div className="mx-4 mt-4">
-          <button
-            onClick={() => setShowLocationPicker(true)}
-            className={`w-full p-4 rounded-2xl border-2 flex items-center gap-3 transition-all ${
-              deliveryAddress
-                ? "border-green-400 bg-green-50"
-                : "border-dashed border-gray-300 bg-white"
-            }`}
-          >
-            <div
-              className={`w-12 h-12 rounded-xl flex items-center justify-center ${
-                deliveryAddress
-                  ? "bg-green-100 text-green-600"
-                  : "bg-orange-100 text-orange-600"
-              }`}
-            >
-              <FaMapMarkerAlt size={20} />
-            </div>
-            <div className="flex-1 text-left">
-              {deliveryAddress ? (
-                <>
-                  <p className="font-bold text-gray-800 text-sm">
-                    {deliveryAddress.manualAddress}
-                  </p>
-                  {deliveryAddress.landmark && (
-                    <p className="text-xs text-gray-500 mt-0.5">
-                      {deliveryAddress.landmark}
-                    </p>
-                  )}
-                </>
-              ) : (
-                <>
-                  <p className="font-bold text-gray-800">Add Delivery Address</p>
-                  <p className="text-xs text-gray-500">
-                    Tap to select your location
-                  </p>
-                </>
-              )}
-            </div>
-            <span className="text-orange-600 font-bold text-sm">
-              {deliveryAddress ? "Change" : "Add"}
-            </span>
-          </button>
+            />
+          </div>
         </div>
       )}
 
-      {/* Cart Items - Large Touch Targets */}
-      <div className="p-4 space-y-4">
-        {cart.length === 0 ? (
-          <div className="text-center py-24">
-            <p className="text-7xl mb-4">🛒</p>
-            <p className="text-gray-500 font-medium text-lg">
-              Your cart is empty
-            </p>
+      {/* Delivery Address */}
+      {orderType === 'Delivery' && (
+        <div className="mx-4 mt-4 p-4 rounded-2xl"
+          style={{ background: 'white', border: '2px solid #E8E3DB', boxShadow: '0 4px 16px rgba(28, 28, 28, 0.06)' }}>
+          <div className="flex justify-between items-center mb-3">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ background: 'rgba(212, 112, 10, 0.1)' }}>
+                <FaMapMarkerAlt size={14} color="#D4700A" />
+              </div>
+              <span className="font-bold" style={{ color: '#1C1C1C' }}>Deliver To</span>
+            </div>
             <button
-              onClick={() => navigate("/menu")}
-              className="mt-6 bg-orange-500 text-white font-bold px-8 py-4 rounded-2xl active:scale-95 transition-transform"
+              onClick={() => navigate('/address/add')}
+              className="flex items-center gap-1 text-sm font-semibold" style={{ color: '#D4700A' }}
             >
-              Browse Menu →
+              <FaEdit size={12} />
+              {addresses.length > 0 ? 'Change' : 'Add'}
             </button>
           </div>
-        ) : (
-          cart.map((item) => (
-            <div
-              key={item.cartId}
-              className="bg-white p-4 rounded-3xl shadow-sm border border-gray-100"
-            >
-              <div className="flex gap-4">
-                {/* Item Info */}
-                <div className="flex-1">
-                  <h3 className="font-bold text-gray-800 text-lg">
-                    {item.name}
-                  </h3>
-                  <div className="flex flex-wrap gap-1.5 mt-1">
-                    {item.size && (
-                      <span className="text-xs bg-gray-100 text-gray-600 px-2.5 py-1 rounded-lg font-medium">
-                        {item.size}
-                      </span>
-                    )}
-                    {item.selectedAddons?.map((addon, idx) => (
-                      <span
-                        key={idx}
-                        className="text-xs bg-orange-50 text-orange-600 px-2.5 py-1 rounded-lg font-medium"
-                      >
-                        +{addon}
-                      </span>
-                    ))}
-                  </div>
-                  <p className="text-orange-600 font-black text-xl mt-2">
-                    ₹{item.price}
-                  </p>
-                </div>
+          {selectedAddress ? (
+            <div className="p-3 rounded-xl" style={{ background: '#FAF7F2', border: '1px solid #E8E3DB' }}>
+              <p className="font-semibold text-sm" style={{ color: '#1C1C1C' }}>{selectedAddress.label || 'Home'}</p>
+              <p className="text-sm mt-1" style={{ color: '#7E7E7E' }}>{selectedAddress.fullAddress}</p>
+            </div>
+          ) : (
+            <p className="text-sm" style={{ color: '#7E7E7E' }}>Please add a delivery address</p>
+          )}
+        </div>
+      )}
 
-                {/* Edit Button */}
-                <button
-                  onClick={() => setEditingItem(item)}
-                  className="w-12 h-12 text-blue-400 hover:text-blue-600 hover:bg-blue-50 rounded-2xl flex items-center justify-center active:scale-90 transition-all"
-                >
-                  <FaEdit size={18} />
-                </button>
+      {/* Cart Items */}
+      <div className="mx-4 mt-4 p-4 rounded-2xl"
+        style={{ background: 'white', border: '2px solid #E8E3DB', boxShadow: '0 4px 16px rgba(28, 28, 28, 0.06)' }}>
+        <div className="flex items-center gap-2 mb-4">
+          <span className="text-lg">🧺</span>
+          <span className="font-bold" style={{ color: '#1C1C1C' }}>Your Items ({cart.length})</span>
+        </div>
 
-                {/* Delete Button */}
-                <button
-                  onClick={() => removeFromCart(item.cartId)}
-                  className="w-12 h-12 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-2xl flex items-center justify-center active:scale-90 transition-all"
-                >
-                  <FaTrash size={18} />
-                </button>
+        {cart.map((item, index) => {
+          const itemPrice = Number(item.price) || 0;
+          const itemQty = Number(item.quantity) || 1;
+          return (
+            <div key={item.cartId || item._id || index}
+              className={`flex gap-4 py-4 animate-fade-in ${index !== cart.length - 1 ? 'border-b border-[#E8E3DB]' : ''}`}
+              style={{ animationDelay: `${index * 0.1}s` }}>
+              <div className="w-20 h-20 rounded-xl overflow-hidden flex-shrink-0" style={{ border: '2px solid #E8E3DB' }}>
+                {item.image ? (
+                  <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center text-2xl" style={{ background: '#FAF7F2' }}>🍰</div>
+                )}
               </div>
-
-              {/* Quantity Controls - Large */}
-              <div className="flex items-center justify-end gap-3 mt-4 pt-4 border-t border-gray-100">
-                <button
-                  onClick={() => updateQuantity(item.cartId, -1)}
-                  className="w-14 h-14 bg-gray-100 rounded-2xl flex items-center justify-center active:scale-90 active:bg-gray-200 transition-all"
-                >
-                  <FaMinus size={14} />
-                </button>
-                <span className="font-black text-2xl w-10 text-center">
-                  {item.quantity}
-                </span>
-                <button
-                  onClick={() => updateQuantity(item.cartId, 1)}
-                  className="w-14 h-14 bg-gradient-to-br from-orange-100 to-amber-100 text-orange-600 rounded-2xl flex items-center justify-center active:scale-90 active:from-orange-500 active:to-orange-600 active:text-white transition-all"
-                >
-                  <FaPlus size={14} />
-                </button>
+              <div className="flex-1 min-w-0">
+                <h4 className="font-semibold truncate" style={{ color: '#1C1C1C' }}>{item.name}</h4>
+                <p className="text-sm mt-0.5" style={{ color: '#7E7E7E' }}>₹{itemPrice} each</p>
+                <div className="flex items-center justify-between mt-2">
+                  <span className="font-bold" style={{ color: '#D4700A' }}>₹{itemPrice * itemQty}</span>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => itemQty > 1 ? updateQuantity(item.cartId, -1) : removeFromCart(item.cartId)}
+                      className="w-8 h-8 rounded-full flex items-center justify-center"
+                      style={{ background: '#FAF7F2', border: '2px solid #E8E3DB' }}
+                    >
+                      {itemQty === 1 ? <FaTrash size={12} color="#E57373" /> : <FaMinus size={12} color="#D4700A" />}
+                    </button>
+                    <span className="w-8 text-center font-bold" style={{ color: '#1C1C1C' }}>{itemQty}</span>
+                    <button
+                      onClick={() => updateQuantity(item.cartId, 1)}
+                      className="w-8 h-8 rounded-full flex items-center justify-center text-white"
+                      style={{ background: 'linear-gradient(135deg, #D4700A 0%, #E8923A 100%)' }}
+                    >
+                      <FaPlus size={12} />
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
-          ))
-        )}
+          )
+        })}
       </div>
 
-      {cart.length > 0 && (
-        <>
-          {/* Bill Summary - Simplified */}
-          <div className="mx-4 bg-white p-5 rounded-3xl shadow-sm border border-gray-100">
-            <h3 className="font-bold text-gray-800 text-base mb-4">
-              🧾 Bill Summary
-            </h3>
-            <div className="space-y-3 text-base">
-              <div className="flex justify-between text-gray-600">
-                <span>Item Total</span>
-                <span className="font-semibold">₹{subtotal.toFixed(2)}</span>
-              </div>
-              <div className="flex justify-between text-gray-500">
-                <span>Platform Fee</span>
-                <span>₹{feeSettings.platformFee.toFixed(2)}</span>
-              </div>
-              {orderType === "Delivery" && (
-                <div className="flex justify-between text-gray-500">
-                  <span className="flex items-center gap-1">
-                    <FaTruck size={12} />
-                    Delivery Fee
-                  </span>
-                  <span className="text-orange-600 font-medium">
-                    Calculated at checkout
-                  </span>
-                </div>
-              )}
-              <div className="border-t-2 border-dashed border-gray-200 pt-4 mt-4">
-                <div className="flex justify-between text-xl font-black text-gray-900">
-                  <span>Estimated</span>
-                  <span className="text-orange-600">
-                    ₹{estimatedTotal.toFixed(0)}+
-                  </span>
-                </div>
-                <p className="text-xs text-gray-400 mt-1">
-                  Final amount includes delivery fee & offers
-                </p>
-              </div>
-            </div>
-          </div>
-        </>
-      )}
-
-      {/* Checkout Button - Fixed, Large & Prominent */}
-      {cart.length > 0 && (
-        <div className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-xl p-4 shadow-[0_-10px_40px_rgba(0,0,0,0.1)] border-t border-gray-100 safe-area-bottom">
-          <button
-            onClick={handleCheckout}
-            className="w-full h-16 bg-gradient-to-r from-orange-600 via-orange-500 to-amber-500 text-white font-bold text-lg rounded-2xl shadow-xl shadow-orange-300/50 active:scale-[0.98] transition-all flex justify-between items-center px-6"
-          >
-            <div className="flex items-center gap-3">
-              <FaShoppingBag size={22} />
-              <span>Proceed to Payment</span>
-            </div>
-            <span className="bg-white/25 px-5 py-2 rounded-xl font-black text-xl">
-              ₹{estimatedTotal.toFixed(0)}+
-            </span>
-          </button>
-        </div>
-      )}
-
-      {/* Customer Entry Modal */}
-      {showCustomerEntry && (
-        <div className="relative z-[100]">
-          <CustomerEntry onClose={() => setShowCustomerEntry(false)} />
-        </div>
-      )}
-
-
-      {/* Location Picker Modal */}
-      {showLocationPicker && (
-        <div className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm flex items-end justify-center sm:items-center p-0 sm:p-4">
-          <div className="bg-white w-full h-[90vh] sm:h-auto sm:max-w-md sm:rounded-3xl rounded-t-3xl overflow-hidden shadow-2xl animate-slide-up flex flex-col">
-            <div className="p-4 border-b border-gray-100 flex justify-between items-center bg-white z-10">
-              <h3 className="text-xl font-bold text-gray-800 flex items-center gap-2">
-                <FaMapMarkerAlt className="text-orange-500" />
-                Delivery Location
-              </h3>
-              <button
-                onClick={() => setShowLocationPicker(false)}
-                className="w-8 h-8 flex items-center justify-center bg-gray-100 rounded-full text-gray-500 font-bold"
-              >
-                &times;
-              </button>
-            </div>
-            <div className="flex-1 overflow-y-auto">
-              <LocationPicker
-                onLocationSelect={(addressData) => {
-                  setDeliveryAddress(addressData);
-                  setShowLocationPicker(false);
-                  // Proceed to payment after location is set
-                  proceedToPayment();
-                }}
-              />
-            </div>
-          </div>
-        </div>
-      )}
-
-
-      {/* Customize Modal for Editing */}
-      {editingItem && (
-        <CustomizeModal
-          product={{
-            _id: editingItem._id,
-            name: editingItem.name,
-            description: editingItem.description || "",
-            basePrice: editingItem.basePrice || editingItem.price,
-            image: editingItem.image,
-            sizes: editingItem.sizes || [],
-            addons: editingItem.addons || [],
-          }}
-          onClose={(didAdd) => {
-            if (didAdd) {
-              // Remove old item when new one is added
-              removeFromCart(editingItem.cartId);
-            }
-            setEditingItem(null);
-          }}
+      {/* Coupon Section */}
+      <div className="mx-4 mt-4 p-4 rounded-2xl flex items-center gap-3"
+        style={{ background: 'linear-gradient(135deg, #FEF3E2 0%, #FDE8CC 100%)', border: '2px dashed #D4700A' }}>
+        <FaTag size={18} color="#D4700A" />
+        <input
+          type="text"
+          placeholder="Have a coupon code?"
+          className="flex-1 bg-transparent outline-none text-sm font-medium"
+          style={{ color: '#D4700A' }}
         />
-      )}
+        <button className="px-4 py-2 rounded-lg text-white text-sm font-bold"
+          style={{ background: 'linear-gradient(135deg, #D4700A 0%, #E8923A 100%)' }}>
+          Apply
+        </button>
+      </div>
 
-      {/* Custom CSS */}
-      <style>{`
-        .safe-area-top { padding-top: env(safe-area-inset-top); }
-        .safe-area-bottom { padding-bottom: env(safe-area-inset-bottom); }
-        @keyframes slide-up { from { transform: translateY(100%); } to { transform: translateY(0); } }
-        .animate-slide-up { animation: slide-up 0.3s ease-out; }
-      `}</style>
+      {/* Bill Summary */}
+      <div className="mx-4 mt-4 p-4 rounded-2xl"
+        style={{ background: 'white', border: '2px solid #E8E3DB', boxShadow: '0 4px 16px rgba(28, 28, 28, 0.06)' }}>
+        <div className="flex items-center gap-2 mb-4">
+          <span className="text-lg">📋</span>
+          <span className="font-bold" style={{ color: '#1C1C1C' }}>Bill Summary</span>
+        </div>
 
-      <Footer />
+        <div className="space-y-3">
+          <div className="flex justify-between text-sm">
+            <span style={{ color: '#7E7E7E' }}>Item Total</span>
+            <span className="font-semibold" style={{ color: '#1C1C1C' }}>₹{(Number(total) || 0).toFixed(2)}</span>
+          </div>
+          {orderType === 'Delivery' && (
+            <div className="flex justify-between text-sm">
+              <span style={{ color: '#7E7E7E' }}>Delivery Fee</span>
+              {deliveryFee === 0 ? (
+                <span className="font-semibold text-green-600">FREE</span>
+              ) : (
+                <span className="font-semibold" style={{ color: '#1C1C1C' }}>₹{deliveryFee}</span>
+              )}
+            </div>
+          )}
+          <div className="pt-3 flex justify-between" style={{ borderTop: '2px dashed #E8E3DB' }}>
+            <span className="font-bold" style={{ color: '#1C1C1C' }}>Grand Total</span>
+            <span className="text-xl font-bold" style={{ color: '#D4700A' }}>₹{(Number(grandTotal) || 0).toFixed(2)}</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Trust Badges */}
+      <div className="mx-4 mt-4 flex justify-center gap-8">
+        <div className="flex items-center gap-2">
+          <FaShieldAlt size={14} color="#22C55E" />
+          <span className="text-xs" style={{ color: '#7E7E7E' }}>Safe Payment</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <FaClock size={14} color="#D4700A" />
+          <span className="text-xs" style={{ color: '#7E7E7E' }}>Quick Delivery</span>
+        </div>
+      </div>
+
+      {/* Checkout Button - Fixed Bottom */}
+      <div className="fixed bottom-0 left-0 right-0 p-4 z-20"
+        style={{ background: 'linear-gradient(180deg, transparent 0%, #FFFFFF 20%, #FFFFFF 100%)' }}>
+        <button
+          onClick={handleCheckout}
+          className="w-full py-4 rounded-2xl text-white font-bold text-lg flex items-center justify-center gap-3 transition-all hover:scale-[1.02] active:scale-[0.98]"
+          style={{
+            background: 'linear-gradient(135deg, #D4700A 0%, #E8923A 100%)',
+            boxShadow: '0 8px 32px rgba(212, 112, 10, 0.4)'
+          }}
+        >
+          <span>Proceed to Pay</span>
+          <span className="px-3 py-1 rounded-lg text-sm" style={{ background: 'rgba(255,255,255,0.2)' }}>
+            ₹{(Number(grandTotal) || 0).toFixed(0)}
+          </span>
+        </button>
+      </div>
     </div>
   );
 };

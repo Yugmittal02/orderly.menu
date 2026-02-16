@@ -28,48 +28,55 @@ const ContactUs = () => {
             label: 'Call Us',
             value: adminPhone,
             href: `tel:+91${adminPhone}`,
-            color: 'blue',
+            iconColor: '#6B4423',
+            bgColor: '#FEF3E2',
         },
         {
             icon: FaWhatsapp,
             label: 'WhatsApp',
             value: 'Chat with us',
             href: `https://wa.me/91${adminPhone}`,
-            color: 'green',
+            iconColor: '#22C55E',
+            bgColor: '#DCFCE7',
         },
         {
             icon: FaEnvelope,
             label: 'Email',
-            value: 'contact@shubhampattis.com',
-            href: 'mailto:contact@shubhampattis.com',
-            color: 'orange',
+            value: 'contact@bakerydelight.com',
+            href: 'mailto:contact@bakerydelight.com',
+            iconColor: '#C9A962',
+            bgColor: '#FEF3E2',
         },
     ];
 
     return (
-        <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
+        <div className="min-h-screen" style={{ background: 'linear-gradient(180deg, #F5F0E8 0%, #FAF7F2 100%)' }}>
             {/* Header */}
-            <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-xl border-b border-gray-100 shadow-sm">
-                <div className="px-4 py-4 flex items-center gap-4">
-                    <button 
-                        onClick={() => navigate(-1)}
-                        className="w-10 h-10 bg-gray-100 rounded-xl flex items-center justify-center text-gray-600 active:scale-95 transition-transform"
-                    >
-                        <FaArrowLeft size={16} />
-                    </button>
-                    <h1 className="text-lg font-bold text-gray-800">Contact Us</h1>
+            <header className="sticky top-0 z-10 px-4 py-4 flex items-center gap-4"
+                style={{ background: 'linear-gradient(180deg, #2D1F16 0%, #3D2B1F 100%)', borderBottom: '3px solid #C9A962' }}>
+                <button
+                    onClick={() => navigate(-1)}
+                    className="w-10 h-10 rounded-xl flex items-center justify-center active:scale-95 transition-transform"
+                    style={{ background: 'rgba(255,255,255,0.1)' }}
+                >
+                    <FaArrowLeft size={16} color="#D4B896" />
+                </button>
+                <div className="flex items-center gap-2">
+                    <span className="text-xl">📞</span>
+                    <h1 className="text-lg font-script" style={{ color: '#D4B896' }}>Contact Us</h1>
                 </div>
             </header>
 
             {/* Content */}
             <div className="p-6 max-w-2xl mx-auto">
                 {/* Hero */}
-                <div className="text-center mb-8">
-                    <div className="w-20 h-20 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <span className="text-4xl">📞</span>
+                <div className="text-center mb-8 animate-fade-in">
+                    <div className="w-24 h-24 rounded-2xl flex items-center justify-center mx-auto mb-4"
+                        style={{ background: 'linear-gradient(135deg, #FEF3E2 0%, #FDE8CC 100%)', border: '3px solid #C9A962' }}>
+                        <span className="text-5xl">📞</span>
                     </div>
-                    <h2 className="text-2xl font-black text-gray-800 mb-2">Get in Touch</h2>
-                    <p className="text-gray-500">We'd love to hear from you!</p>
+                    <h2 className="text-2xl font-script mb-2" style={{ color: '#6B4423' }}>Get in Touch</h2>
+                    <p style={{ color: '#8B7355' }}>We'd love to hear from you!</p>
                 </div>
 
                 {/* Contact Methods */}
@@ -80,43 +87,53 @@ const ContactUs = () => {
                             href={method.href}
                             target={method.icon === FaWhatsapp ? '_blank' : undefined}
                             rel={method.icon === FaWhatsapp ? 'noopener noreferrer' : undefined}
-                            className={`block w-full p-5 rounded-2xl border-2 border-gray-100 bg-white hover:border-${method.color}-200 hover:bg-${method.color}-50/50 transition-all active:scale-[0.98]`}
+                            className="block w-full p-5 rounded-2xl transition-all active:scale-[0.98] animate-fade-in"
+                            style={{
+                                background: 'white',
+                                border: '2px solid #E8E3DB',
+                                boxShadow: '0 4px 16px rgba(74, 55, 40, 0.06)',
+                                animationDelay: `${idx * 0.1}s`
+                            }}
                         >
                             <div className="flex items-center gap-4">
-                                <div className={`w-14 h-14 bg-${method.color}-100 rounded-2xl flex items-center justify-center`}>
-                                    <method.icon className={`text-${method.color}-600`} size={22} />
+                                <div className="w-14 h-14 rounded-2xl flex items-center justify-center"
+                                    style={{ background: method.bgColor }}>
+                                    <method.icon size={22} color={method.iconColor} />
                                 </div>
                                 <div className="flex-1">
-                                    <p className="font-bold text-gray-800 text-base">{method.label}</p>
-                                    <p className="text-sm text-gray-500">{method.value}</p>
+                                    <p className="font-bold text-base" style={{ color: '#4A3728' }}>{method.label}</p>
+                                    <p className="text-sm" style={{ color: '#8B7355' }}>{method.value}</p>
                                 </div>
-                                <span className="text-gray-400">→</span>
+                                <span style={{ color: '#C9A962' }}>→</span>
                             </div>
                         </a>
                     ))}
                 </div>
 
                 {/* Address & Hours */}
-                <div className="bg-white rounded-2xl border border-gray-100 p-5 mb-8">
-                    <div className="flex items-start gap-4 mb-4">
-                        <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center flex-shrink-0">
-                            <FaMapMarkerAlt className="text-purple-600" size={18} />
+                <div className="rounded-2xl p-5 mb-8"
+                    style={{ background: 'white', border: '2px solid #E8E3DB', boxShadow: '0 4px 16px rgba(74, 55, 40, 0.06)' }}>
+                    <div className="flex items-start gap-4 mb-4 pb-4" style={{ borderBottom: '1px dashed #E8E3DB' }}>
+                        <div className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0"
+                            style={{ background: '#FEF3E2' }}>
+                            <FaMapMarkerAlt size={18} color="#6B4423" />
                         </div>
                         <div>
-                            <p className="font-bold text-gray-800">Our Location</p>
-                            <p className="text-sm text-gray-500 mt-1">
-                                ShubhamPattis, Main Market Road,<br />
+                            <p className="font-bold" style={{ color: '#4A3728' }}>Our Location</p>
+                            <p className="text-sm mt-1" style={{ color: '#8B7355' }}>
+                                Bakery Delight, Main Market Road,<br />
                                 Near City Center, Delhi - 110001
                             </p>
                         </div>
                     </div>
                     <div className="flex items-start gap-4">
-                        <div className="w-12 h-12 bg-amber-100 rounded-xl flex items-center justify-center flex-shrink-0">
-                            <FaClock className="text-amber-600" size={18} />
+                        <div className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0"
+                            style={{ background: '#FEF3E2' }}>
+                            <FaClock size={18} color="#C9A962" />
                         </div>
                         <div>
-                            <p className="font-bold text-gray-800">Working Hours</p>
-                            <p className="text-sm text-gray-500 mt-1">
+                            <p className="font-bold" style={{ color: '#4A3728' }}>Working Hours</p>
+                            <p className="text-sm mt-1" style={{ color: '#8B7355' }}>
                                 Monday - Sunday<br />
                                 10:00 AM - 10:00 PM
                             </p>

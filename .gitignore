@@ -47,3 +47,4 @@ Thumbs.db
 # Optional: Ignore the brain folder if it was inside the repo (it's not, based on paths)
 # But just in case user copies artifacts in
 brain/
+

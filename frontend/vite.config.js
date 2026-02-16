@@ -9,27 +9,17 @@ export default defineConfig({
     tailwindcss(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'mask-icon.svg'],
-      manifest: {
-        name: 'SewaShubham Backery',
-        short_name: 'SewaShubham',
-        description: 'Order your favorite food from SewaShubham Backery',
-        theme_color: '#ffffff',
-        icons: [
-          {
-            src: 'pwa-192x192.png',
-            sizes: '192x192',
-            type: 'image/png'
-          },
-          {
-            src: 'pwa-512x512.png',
-            sizes: '512x512',
-            type: 'image/png'
-          }
-        ]
+      injectRegister: null, // We handle registration manually in index.html
+      manifest: false, // Use the manifest.json from public folder
+      devOptions: {
+        enabled: false // Disable in dev to avoid issues
       }
     })
   ],
+  server: {
+    host: true, // Allow external access (mobile)
+    port: 3000,
+  },
   // Performance optimizations for faster loading
   build: {
     rollupOptions: {

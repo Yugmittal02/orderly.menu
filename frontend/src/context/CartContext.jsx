@@ -20,7 +20,11 @@ export const CartProvider = ({ children }) => {
   // Calculate total whenever cart changes
   useEffect(() => {
     const newTotal = cart.reduce(
-      (sum, item) => sum + item.price * item.quantity,
+      (sum, item) => {
+        const itemPrice = Number(item.price) || Number(item.basePrice) || 0;
+        const itemQty = Number(item.quantity) || 1;
+        return sum + (itemPrice * itemQty);
+      },
       0,
     );
     setTotal(newTotal);

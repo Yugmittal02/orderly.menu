@@ -17,24 +17,24 @@ const OffersDropdown = ({ orderTotal = 0, onOfferSelect, selectedOffer = null })
       setError(null);
       const response = await fetchOffers();
       const data = response?.data || [];
-      
+
       // Safely filter offers with defensive checks
-      const activeOffers = Array.isArray(data) 
+      const activeOffers = Array.isArray(data)
         ? data.filter(offer => {
-            // Basic validation
-            if (!offer || !offer.isActive) return false;
-            
-            // Check minimum order value
-            if (offer.minOrderValue && orderTotal < offer.minOrderValue) return false;
-            
-            // Exclude promotional combo offers (REP = Republic Day combos)
-            // These are fixed-price deals, not discount codes
-            if (offer.code && offer.code.startsWith('REP')) return false;
-            
-            return true;
-          })
+          // Basic validation
+          if (!offer || !offer.isActive) return false;
+
+          // Check minimum order value
+          if (offer.minOrderValue && orderTotal < offer.minOrderValue) return false;
+
+          // Exclude promotional combo offers (REP = Republic Day combos)
+          // These are fixed-price deals, not discount codes
+          if (offer.code && offer.code.startsWith('REP')) return false;
+
+          return true;
+        })
         : [];
-      
+
       setOffers(activeOffers);
     } catch (err) {
       console.error('Error loading offers:', err);
@@ -51,10 +51,10 @@ const OffersDropdown = ({ orderTotal = 0, onOfferSelect, selectedOffer = null })
 
   const calculateDiscount = useCallback((offer) => {
     if (!offer) return 0;
-    
+
     const total = Number(orderTotal) || 0;
     const discountValue = Number(offer.discountValue) || 0;
-    
+
     if (offer.discountType === 'percentage') {
       return Math.round(total * (discountValue / 100));
     }
@@ -87,7 +87,7 @@ const OffersDropdown = ({ orderTotal = 0, onOfferSelect, selectedOffer = null })
     }
 
     const code = couponCode.trim().toUpperCase();
-    
+
     // Block promotional combo codes (not discount codes)
     if (code.startsWith('REP')) {
       setCouponError('This is a combo deal, not a discount code. Add the combo items to your cart.');
@@ -100,7 +100,7 @@ const OffersDropdown = ({ orderTotal = 0, onOfferSelect, selectedOffer = null })
     try {
       const response = await validateCoupon(code, orderTotal);
       const offer = response?.data?.offer;
-      
+
       if (offer) {
         handleSelectOffer(offer);
       } else {
@@ -125,23 +125,21 @@ const OffersDropdown = ({ orderTotal = 0, onOfferSelect, selectedOffer = null })
   return (
     <div className="relative">
       {/* Selected Offer Display or Dropdown Trigger */}
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className={`w-full p-4 rounded-3xl border-2 flex items-center gap-4 transition-all ${
-          selectedOffer
+      <div
+        onClick={() => !selectedOffer && setIsOpen(!isOpen)}
+        className={`w-full p-4 rounded-3xl border-2 flex items-center gap-4 transition-all cursor-pointer ${selectedOffer
             ? 'border-green-400 bg-green-50'
             : 'border-gray-200 bg-white hover:border-orange-300'
-        }`}
+          }`}
       >
-        <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${
-          selectedOffer
+        <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${selectedOffer
             ? 'bg-gradient-to-br from-green-400 to-emerald-500'
             : 'bg-gradient-to-br from-orange-400 to-orange-500'
-        }`}>
+          }`}>
           <FaTag className="text-white text-lg" />
         </div>
-        
-        <div className="flex-1 text-left">
+
+        <div className="flex-1 text-left" onClick={() => selectedOffer && setIsOpen(!isOpen)}>
           {selectedOffer ? (
             <>
               <p className="font-bold text-gray-800">{selectedOffer.title}</p>
@@ -153,7 +151,7 @@ const OffersDropdown = ({ orderTotal = 0, onOfferSelect, selectedOffer = null })
             <>
               <p className="font-bold text-gray-800">Apply Coupon / Offer</p>
               <p className="text-sm text-gray-500">
-                {offers.length > 0 
+                {offers.length > 0
                   ? `${offers.length} offer${offers.length !== 1 ? 's' : ''} available`
                   : 'Enter coupon code'}
               </p>
@@ -171,7 +169,7 @@ const OffersDropdown = ({ orderTotal = 0, onOfferSelect, selectedOffer = null })
         ) : (
           <FaChevronDown className={`text-gray-400 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
         )}
-      </button>
+      </div>
 
       {/* Dropdown Menu */}
       {isOpen && (
@@ -222,25 +220,23 @@ const OffersDropdown = ({ orderTotal = 0, onOfferSelect, selectedOffer = null })
               {offers.map((offer) => {
                 const discount = calculateDiscount(offer);
                 const isSelected = selectedOffer?._id === offer._id;
-                
+
                 return (
                   <button
                     key={offer._id}
                     onClick={() => handleSelectOffer(offer)}
-                    className={`w-full p-4 rounded-xl flex items-start gap-3 transition-all mb-1 last:mb-0 ${
-                      isSelected
+                    className={`w-full p-4 rounded-xl flex items-start gap-3 transition-all mb-1 last:mb-0 ${isSelected
                         ? 'bg-green-50 border-2 border-green-400'
                         : 'hover:bg-gray-50 border-2 border-transparent'
-                    }`}
+                      }`}
                   >
-                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${
-                      offer.discountType === 'percentage'
+                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${offer.discountType === 'percentage'
                         ? 'bg-purple-100 text-purple-600'
                         : 'bg-orange-100 text-orange-600'
-                    }`}>
+                      }`}>
                       {offer.discountType === 'percentage' ? <FaPercent /> : <FaRupeeSign />}
                     </div>
-                    
+
                     <div className="flex-1 text-left">
                       <div className="flex items-center gap-2">
                         <p className="font-bold text-gray-800">{offer.title}</p>
@@ -251,8 +247,8 @@ const OffersDropdown = ({ orderTotal = 0, onOfferSelect, selectedOffer = null })
                       )}
                       <div className="flex items-center gap-2 mt-2">
                         <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-lg font-bold">
-                          {offer.discountType === 'percentage' 
-                            ? `${offer.discountValue}% OFF` 
+                          {offer.discountType === 'percentage'
+                            ? `${offer.discountValue}% OFF`
                             : `₹${offer.discountValue} OFF`}
                         </span>
                         <span className="text-xs text-gray-400">
@@ -286,8 +282,8 @@ const OffersDropdown = ({ orderTotal = 0, onOfferSelect, selectedOffer = null })
 
       {/* Backdrop */}
       {isOpen && (
-        <div 
-          className="fixed inset-0 z-40" 
+        <div
+          className="fixed inset-0 z-40"
           onClick={() => setIsOpen(false)}
         />
       )}

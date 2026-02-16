@@ -1,162 +1,227 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FaArrowLeft, FaReceipt, FaClock, FaCheckCircle, FaSpinner, FaUtensils, FaBoxOpen, FaUser } from 'react-icons/fa';
-import { fetchMyOrders } from '../services/api';
 import { useAuth } from '../context/AuthContext';
-import Footer from '../components/Footer';
+import { fetchMyOrders } from '../services/api';
+import {
+    FaArrowLeft, FaReceipt, FaClock, FaCheckCircle, FaSpinner, FaUtensils,
+    FaBoxOpen, FaUser, FaMapMarkerAlt, FaEdit, FaHeart, FaCrown, FaStar,
+    FaGift, FaPercent, FaBell
+} from 'react-icons/fa';
 
 const UserDashboard = () => {
     const navigate = useNavigate();
-    const { customer, logoutCustomer } = useAuth();
+    const { customer, logout } = useAuth();
     const [orders, setOrders] = useState([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         if (!customer) {
-            navigate('/');
+            navigate('/login');
             return;
         }
-
-        const loadOrders = async () => {
-            try {
-                const { data } = await fetchMyOrders();
-                setOrders(data);
-            } catch (error) {
-                console.error('Failed to fetch orders:', error);
-            } finally {
-                setLoading(false);
-            }
-        };
-
         loadOrders();
     }, [customer, navigate]);
 
-    const getStatusColor = (status) => {
-        switch (status) {
-            case 'Pending': return 'text-yellow-600 bg-yellow-100';
-            case 'Preparing': return 'text-blue-600 bg-blue-100';
-            case 'Ready': return 'text-purple-600 bg-purple-100';
-            case 'Delivered': return 'text-green-600 bg-green-100';
-            case 'Cancelled': return 'text-red-600 bg-red-100';
-            default: return 'text-gray-600 bg-gray-100';
+    const loadOrders = useCallback(async () => {
+        try {
+            const { data } = await fetchMyOrders();
+            setOrders(data || []);
+        } catch (err) {
+            console.error(err);
+        } finally {
+            setLoading(false);
         }
-    };
-    
+    }, []);
+
     const getStatusIcon = (status) => {
         switch (status) {
-            case 'Pending': return <FaClock />;
-            case 'Preparing': return <FaUtensils />;
-            case 'Ready': return <FaBoxOpen />;
-            case 'Delivered': return <FaCheckCircle />;
-            default: return <FaReceipt />;
+            case 'delivered': return <FaCheckCircle className="text-green-500" />;
+            case 'preparing': return <FaUtensils className="text-orange-500" />;
+            case 'out_for_delivery': return <FaBoxOpen className="text-blue-500" />;
+            default: return <FaClock className="text-yellow-500" />;
         }
+    };
+
+    const getStatusColor = (status) => {
+        switch (status) {
+            case 'delivered': return { bg: '#DCFCE7', text: '#166534' };
+            case 'preparing': return { bg: '#FEF3C7', text: '#92400E' };
+            case 'out_for_delivery': return { bg: '#DBEAFE', text: '#1E40AF' };
+            case 'cancelled': return { bg: '#FEE2E2', text: '#991B1B' };
+            default: return { bg: '#FEF3E2', text: '#6B4423' };
+        }
+    };
+
+    const handleLogout = () => {
+        logout();
+        navigate('/');
     };
 
     if (!customer) return null;
 
     return (
-        <div className="min-h-screen bg-gray-50 pb-20">
+        <div className="min-h-screen pb-20" style={{ background: 'linear-gradient(180deg, #F5F0E8 0%, #FAF7F2 100%)' }}>
             {/* Header */}
-            <div className="bg-white sticky top-0 z-10 shadow-sm px-4 py-4 flex items-center justify-between">
-                <button 
-                    onClick={() => navigate('/')}
-                    className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center text-gray-600 hover:bg-gray-200"
-                >
-                    <FaArrowLeft />
+            <header className="sticky top-0 z-10 px-4 py-4 flex items-center justify-between"
+                style={{ background: 'linear-gradient(180deg, #2D1F16 0%, #3D2B1F 100%)', borderBottom: '3px solid #C9A962' }}>
+                <button onClick={() => navigate(-1)} className="w-10 h-10 rounded-full flex items-center justify-center"
+                    style={{ background: 'rgba(255,255,255,0.1)' }}>
+                    <FaArrowLeft size={18} color="#D4B896" />
                 </button>
-                <h1 className="text-xl font-bold text-gray-800">My Dashboard</h1>
-                <div className="w-10"></div>
-            </div>
+                <div className="flex items-center gap-2">
+                    <span className="text-2xl">👤</span>
+                    <h1 className="text-xl font-script" style={{ color: '#D4B896' }}>My Account</h1>
+                </div>
+                <button onClick={() => navigate('/notifications')} className="w-10 h-10 rounded-full flex items-center justify-center relative"
+                    style={{ background: 'rgba(255,255,255,0.1)' }}>
+                    <FaBell size={16} color="#D4B896" />
+                    <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-red-500"></span>
+                </button>
+            </header>
 
-            {/* Profile Section */}
-            <div className="p-6 bg-white mb-4">
-                <div className="flex items-center gap-4">
-                    <div className="w-16 h-16 bg-gradient-to-br from-orange-400 to-red-500 rounded-full flex items-center justify-center text-white text-2xl font-bold shadow-lg">
-                        <FaUser />
+            {/* Profile Card */}
+            <div className="mx-4 mt-4 p-6 rounded-2xl relative overflow-hidden"
+                style={{ background: 'linear-gradient(135deg, #3D2B1F 0%, #4A3728 100%)', boxShadow: '0 8px 32px rgba(74, 55, 40, 0.25)' }}>
+                {/* Decorative circles */}
+                <div className="absolute -top-10 -right-10 w-32 h-32 rounded-full" style={{ background: 'rgba(201, 169, 98, 0.1)' }}></div>
+                <div className="absolute -bottom-10 -left-10 w-24 h-24 rounded-full" style={{ background: 'rgba(201, 169, 98, 0.1)' }}></div>
+
+                <div className="relative flex items-center gap-4">
+                    <div className="w-20 h-20 rounded-2xl flex items-center justify-center"
+                        style={{ background: 'linear-gradient(135deg, #C9A962 0%, #D4B87A 100%)', boxShadow: '0 4px 12px rgba(201, 169, 98, 0.4)' }}>
+                        <span className="text-3xl">😊</span>
                     </div>
-                    <div>
-                        <h2 className="text-xl font-bold text-gray-800">{customer.name}</h2>
-                        <p className="text-gray-500">{customer.phone}</p>
+                    <div className="flex-1">
+                        <h2 className="text-xl font-bold text-white">{customer.name}</h2>
+                        <p className="text-sm mt-1" style={{ color: 'rgba(255,255,255,0.6)' }}>{customer.phone}</p>
+                        <div className="flex items-center gap-2 mt-2">
+                            <div className="flex items-center gap-1 px-2 py-1 rounded-full" style={{ background: 'rgba(201, 169, 98, 0.2)' }}>
+                                <FaCrown size={10} color="#C9A962" />
+                                <span className="text-[10px] font-bold" style={{ color: '#C9A962' }}>MEMBER</span>
+                            </div>
+                            <div className="flex items-center gap-1 px-2 py-1 rounded-full" style={{ background: 'rgba(255,255,255,0.1)' }}>
+                                <FaStar size={10} color="#F5A623" />
+                                <span className="text-[10px] font-bold text-white">{orders.length} Orders</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
-                <button 
-                    onClick={() => { logoutCustomer(); navigate('/'); }}
-                    className="mt-4 w-full py-2 border-2 border-red-100 text-red-500 font-bold rounded-xl hover:bg-red-50 transition-colors"
-                >
-                    Logout
+            </div>
+
+            {/* Quick Actions */}
+            <div className="mx-4 mt-4 grid grid-cols-3 gap-3">
+                <button onClick={() => navigate('/address/add')}
+                    className="p-4 rounded-xl flex flex-col items-center gap-2 transition-all hover:scale-105"
+                    style={{ background: 'white', border: '2px solid #E8E3DB', boxShadow: '0 4px 12px rgba(74, 55, 40, 0.06)' }}>
+                    <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ background: '#FEF3E2' }}>
+                        <FaMapMarkerAlt size={16} color="#6B4423" />
+                    </div>
+                    <span className="text-xs font-semibold" style={{ color: '#4A3728' }}>Address</span>
+                </button>
+                <button onClick={() => navigate('/favorites')}
+                    className="p-4 rounded-xl flex flex-col items-center gap-2 transition-all hover:scale-105"
+                    style={{ background: 'white', border: '2px solid #E8E3DB', boxShadow: '0 4px 12px rgba(74, 55, 40, 0.06)' }}>
+                    <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ background: '#FEE2E2' }}>
+                        <FaHeart size={16} color="#E57373" />
+                    </div>
+                    <span className="text-xs font-semibold" style={{ color: '#4A3728' }}>Favorites</span>
+                </button>
+                <button onClick={() => navigate('/offers')}
+                    className="p-4 rounded-xl flex flex-col items-center gap-2 transition-all hover:scale-105"
+                    style={{ background: 'white', border: '2px solid #E8E3DB', boxShadow: '0 4px 12px rgba(74, 55, 40, 0.06)' }}>
+                    <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ background: '#DCFCE7' }}>
+                        <FaPercent size={14} color="#22C55E" />
+                    </div>
+                    <span className="text-xs font-semibold" style={{ color: '#4A3728' }}>Offers</span>
                 </button>
             </div>
 
-            {/* Recent Orders */}
-            <div className="px-4">
-                <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
-                    <FaReceipt className="text-orange-500" />
-                    Recent Bills
-                </h3>
+            {/* Loyalty Card */}
+            <div className="mx-4 mt-4 p-4 rounded-2xl flex items-center gap-4"
+                style={{ background: 'linear-gradient(135deg, #FEF3E2 0%, #FDE8CC 100%)', border: '2px solid #C9A962' }}>
+                <div className="w-14 h-14 rounded-xl flex items-center justify-center"
+                    style={{ background: 'linear-gradient(135deg, #C9A962 0%, #D4B87A 100%)' }}>
+                    <FaGift size={24} color="#3D2B1F" />
+                </div>
+                <div className="flex-1">
+                    <p className="font-bold" style={{ color: '#6B4423' }}>🎉 Loyalty Points</p>
+                    <p className="text-sm" style={{ color: '#8B7355' }}>Earn points on every order!</p>
+                </div>
+                <div className="text-right">
+                    <p className="text-2xl font-bold" style={{ color: '#6B4423' }}>{orders.length * 50}</p>
+                    <p className="text-[10px]" style={{ color: '#8B7355' }}>points</p>
+                </div>
+            </div>
+
+            {/* Orders Section */}
+            <div className="mx-4 mt-6">
+                <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-2">
+                        <FaReceipt size={18} color="#6B4423" />
+                        <h3 className="font-bold" style={{ color: '#4A3728' }}>My Orders</h3>
+                    </div>
+                    <span className="text-sm" style={{ color: '#8B7355' }}>{orders.length} total</span>
+                </div>
 
                 {loading ? (
-                    <div className="flex justify-center py-10">
-                        <FaSpinner className="animate-spin text-orange-500 text-3xl" />
+                    <div className="flex justify-center py-12">
+                        <FaSpinner className="animate-spin" size={24} color="#6B4423" />
                     </div>
                 ) : orders.length === 0 ? (
-                    <div className="text-center py-10 bg-white rounded-2xl shadow-sm">
-                        <FaReceipt className="mx-auto text-4xl text-gray-300 mb-3" />
-                        <p className="text-gray-500">No orders found</p>
-                        <button 
-                            onClick={() => navigate('/')}
-                            className="mt-4 text-orange-600 font-bold"
-                        >
-                            Start Ordering
+                    <div className="text-center py-12 rounded-2xl" style={{ background: 'white', border: '2px solid #E8E3DB' }}>
+                        <p className="text-5xl mb-4">🛒</p>
+                        <p className="font-semibold" style={{ color: '#4A3728' }}>No orders yet</p>
+                        <p className="text-sm mt-1 mb-4" style={{ color: '#8B7355' }}>Start ordering delicious treats!</p>
+                        <button onClick={() => navigate('/menu')}
+                            className="px-6 py-3 rounded-xl text-white font-semibold"
+                            style={{ background: 'linear-gradient(135deg, #6B4423 0%, #5C4033 100%)' }}>
+                            Browse Menu
                         </button>
                     </div>
                 ) : (
-                    <div className="space-y-4">
-                        {orders.map((order) => (
-                            <div key={order._id} className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
-                                <div className="flex justify-between items-start mb-3">
-                                    <div>
-                                        <p className="font-bold text-gray-800">Order #{order.orderId?.slice(-6) || order._id.slice(-6)}</p>
-                                        <p className="text-xs text-gray-400">
-                                            {new Date(order.createdAt).toLocaleDateString('en-IN', {
-                                                day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit'
-                                            })}
-                                        </p>
-                                    </div>
-                                    <span className={`px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1 ${getStatusColor(order.status)}`}>
-                                        {getStatusIcon(order.status)}
-                                        {order.status}
-                                    </span>
-                                </div>
-
-                                <div className="border-t border-b border-gray-50 py-3 my-3 space-y-1">
-                                    {order.items.map((item, idx) => (
-                                        <div key={idx} className="flex justify-between text-sm">
-                                            <span className="text-gray-600">{item.quantity} x {item.name}</span>
-                                            <span className="font-medium">₹{item.price * item.quantity}</span>
+                    <div className="space-y-3">
+                        {orders.slice(0, 5).map((order, index) => {
+                            const statusStyle = getStatusColor(order.status);
+                            return (
+                                <div key={order._id}
+                                    className="p-4 rounded-2xl animate-fade-in"
+                                    style={{ background: 'white', border: '2px solid #E8E3DB', animationDelay: `${index * 0.1}s` }}>
+                                    <div className="flex justify-between items-start mb-3">
+                                        <div>
+                                            <p className="font-bold text-sm" style={{ color: '#4A3728' }}>
+                                                #{order._id?.slice(-6).toUpperCase()}
+                                            </p>
+                                            <p className="text-xs mt-0.5" style={{ color: '#8B7355' }}>
+                                                {new Date(order.createdAt).toLocaleDateString()}
+                                            </p>
                                         </div>
-                                    ))}
+                                        <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold"
+                                            style={{ background: statusStyle.bg, color: statusStyle.text }}>
+                                            {getStatusIcon(order.status)}
+                                            <span className="capitalize">{order.status?.replace('_', ' ')}</span>
+                                        </div>
+                                    </div>
+                                    <div className="flex justify-between items-center">
+                                        <p className="text-sm" style={{ color: '#8B7355' }}>
+                                            {order.items?.length} items
+                                        </p>
+                                        <p className="font-bold" style={{ color: '#6B4423' }}>₹{order.total}</p>
+                                    </div>
                                 </div>
-
-                                <div className="flex justify-between items-center">
-                                    <span className="text-sm text-gray-500">Total Amount</span>
-                                    <span className="text-lg font-bold text-gray-800">₹{order.totalAmount}</span>
-                                </div>
-                                
-                                {order.status !== 'Delivered' && order.status !== 'Cancelled' && (
-                                    <button 
-                                        onClick={() => navigate('/order-success', { state: { orderId: order._id, orderDate: order.createdAt } })}
-                                        className="mt-3 w-full py-2 bg-orange-50 text-orange-600 font-bold rounded-xl text-sm"
-                                    >
-                                        Track Order
-                                    </button>
-                                )}
-                            </div>
-                        ))}
+                            );
+                        })}
                     </div>
                 )}
             </div>
-            
-            <Footer />
+
+            {/* Logout Button */}
+            <div className="mx-4 mt-6">
+                <button onClick={handleLogout}
+                    className="w-full py-4 rounded-2xl font-semibold border-2 transition-all hover:bg-red-50"
+                    style={{ borderColor: '#E57373', color: '#E57373' }}>
+                    Logout
+                </button>
+            </div>
         </div>
     );
 };

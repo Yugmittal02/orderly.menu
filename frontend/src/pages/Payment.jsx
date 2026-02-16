@@ -25,12 +25,21 @@ import Footer from "../components/Footer";
 
 const Payment = () => {
   const { cart, total, clearCart } = useCart();
-  const { customer } = useAuth();
+  const { customer, enterAsCustomer } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Get data passed from Cart page
-  const { orderType, deliveryAddress } = location.state || {};
+  // Redirect if not logged in
+  useEffect(() => {
+    if (!customer) {
+      navigate('/login', { state: { from: '/cart' } });
+    }
+  }, [customer, navigate]);
+
+  // Get data passed from Cart page - default to Takeaway if not provided
+  const passedOrderType = location.state?.orderType;
+  const orderType = passedOrderType || "Takeaway";
+  const deliveryAddress = location.state?.deliveryAddress || null;
 
   const [loading, setLoading] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState("Razorpay");
@@ -58,8 +67,8 @@ const Payment = () => {
   const [celebrationAmount, setCelebrationAmount] = useState(0);
 
   // Calculations - No tax, no platform fee
-  const subtotal = total;
-  const grandTotal = subtotal + deliveryFee - discount;
+  const subtotal = Number(total) || 0;
+  const grandTotal = Math.max(0, subtotal + (Number(deliveryFee) || 0) - (Number(discount) || 0));
 
   // Check for pending payment on page load (for UPI app return)
   useEffect(() => {
@@ -194,10 +203,8 @@ const Payment = () => {
       // Double-check ref hasn't been set during timeout
       if (isProcessingRef.current) return;
 
+      // Only redirect if cart is actually empty
       if (cart.length === 0 && !isProcessingOrder) {
-        navigate("/cart");
-      }
-      if (!orderType && !isProcessingOrder) {
         navigate("/cart");
       }
     }, 200);
@@ -262,41 +269,49 @@ const Payment = () => {
   };
 
   const processOrder = async () => {
-    if (!customer || !customer.name || !customer.phone) {
-      alert("Customer information is required. Please go back to cart.");
-      navigate("/cart");
+    // Ensure customer is logged in
+    if (!customer) {
+      alert("Please login to place an order");
+      navigate('/login', { state: { from: '/cart' } });
       return;
     }
+
+    const orderCustomer = customer;
+
 
     setLoading(true);
 
     try {
       const customerRes = await registerCustomer({
-        name: customer.name,
-        phone: customer.phone,
+        name: orderCustomer.name,
+        phone: orderCustomer.phone,
       });
       const userId = customerRes.data.user._id;
 
       const orderData = {
         user: userId,
-        items: cart.map((item) => ({
-          product: item._id,
-          name: item.name,
-          quantity: item.quantity,
-          size: item.size,
-          addons: item.selectedAddons,
-          price: item.price * item.quantity,
-        })),
+        items: cart.map((item) => {
+          const itemPrice = Number(item.price) || Number(item.basePrice) || 0;
+          const itemQty = Number(item.quantity) || 1;
+          return {
+            product: item._id,
+            name: item.name,
+            quantity: itemQty,
+            size: item.size,
+            addons: item.selectedAddons,
+            price: itemPrice * itemQty,
+          };
+        }),
         totalAmount: grandTotal,
         paymentMethod,
         orderType,
         deliveryAddress: orderType === "Delivery" ? deliveryAddress : undefined,
         appliedOffer: selectedOffer
           ? {
-              offerId: selectedOffer._id,
-              code: selectedOffer.code,
-              discountAmount: discount,
-            }
+            offerId: selectedOffer._id,
+            code: selectedOffer.code,
+            discountAmount: discount,
+          }
           : undefined,
         deliveryFee,
       };
@@ -391,13 +406,13 @@ const Payment = () => {
   // Show loading overlay when checking pending payment
   if (checkingPendingPayment) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-gray-50 to-orange-50/30 flex items-center justify-center">
-        <div className="bg-white rounded-3xl p-8 shadow-xl text-center max-w-sm mx-4">
-          <div className="w-16 h-16 border-4 border-orange-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <h2 className="text-xl font-bold text-gray-800 mb-2">
+      <div className="min-h-screen bg-[var(--bg-page)] flex items-center justify-center">
+        <div className="bg-white rounded-3xl p-8 shadow-xl text-center max-w-sm mx-4 border border-[var(--border-light)]">
+          <div className="w-16 h-16 border-4 border-[var(--accent-gold)] border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <h2 className="text-xl font-bold text-[var(--text-dark)] mb-2">
             Verifying Payment...
           </h2>
-          <p className="text-gray-500 text-sm">
+          <p className="text-[var(--text-muted)] text-sm">
             Please wait while we confirm your payment status
           </p>
         </div>
@@ -408,46 +423,47 @@ const Payment = () => {
   // Show redirecting loader after successful payment
   if (isRedirecting) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-gray-50 to-orange-50/30 flex items-center justify-center">
-        <div className="bg-white rounded-3xl p-8 shadow-xl text-center max-w-sm mx-4">
-          <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+      <div className="min-h-screen bg-[var(--bg-page)] flex items-center justify-center">
+        <div className="bg-white rounded-3xl p-8 shadow-xl text-center max-w-sm mx-4 border border-[var(--border-light)]">
+          <div className="w-20 h-20 bg-green-50 rounded-full flex items-center justify-center mx-auto mb-4 border-2 border-green-100">
             <FaCheckCircle className="text-green-500 text-4xl" />
           </div>
-          <h2 className="text-xl font-bold text-gray-800 mb-2">
+          <h2 className="text-xl font-bold text-[var(--text-dark)] mb-2">
             Payment Successful!
           </h2>
-          <p className="text-gray-500 text-sm mb-4">
+          <p className="text-[var(--text-muted)] text-sm mb-4">
             Redirecting to your order status...
           </p>
-          <div className="w-10 h-10 border-4 border-orange-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
+          <div className="w-10 h-10 border-4 border-[var(--accent-gold)] border-t-transparent rounded-full animate-spin mx-auto"></div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-orange-50/30 pb-32">
+    <div className="min-h-screen bg-[var(--bg-page)] pb-32">
       {/* Header */}
-      <header className="bg-white/95 backdrop-blur-xl px-4 py-4 shadow-sm border-b border-gray-100 flex justify-between items-center sticky top-0 z-10 safe-area-top">
+      <header className="bakery-header px-4 py-4 shadow-sm flex justify-between items-center sticky top-0 z-10 safe-area-top">
         <div className="flex items-center gap-4">
           <button
             onClick={() => navigate(-1)}
-            className="w-12 h-12 bg-gray-100 rounded-2xl flex items-center justify-center text-gray-600 active:scale-95 active:bg-gray-200 transition-all"
+            className="w-12 h-12 rounded-2xl flex items-center justify-center active:scale-95 transition-all"
+            style={{ background: 'rgba(212, 112, 10, 0.1)' }}
           >
-            <FaArrowLeft size={18} />
+            <FaArrowLeft size={18} color="#D4700A" />
           </button>
           <div>
-            <h1 className="text-xl font-black text-gray-800">Payment</h1>
-            <p className="text-sm text-gray-500">Complete your order</p>
+            <h1 className="text-xl font-script" style={{ color: '#D4700A' }}>Payment</h1>
+            <p className="text-sm" style={{ color: '#7E7E7E' }}>Complete your order</p>
           </div>
         </div>
         {customer && (
           <div className="flex flex-col items-end">
-            <div className="text-[10px] uppercase font-bold text-gray-400 tracking-wider mb-0.5">
+            <div className="text-[10px] uppercase font-bold tracking-wider mb-0.5" style={{ color: '#D4700A' }}>
               {orderType}
             </div>
-            <div className="flex items-center gap-2 bg-orange-50 px-3 py-1 rounded-lg border border-orange-100">
-              <span className="text-xs font-bold text-orange-800 max-w-[80px] truncate">
+            <div className="flex items-center gap-2 px-3 py-1 rounded-lg" style={{ border: '1px solid rgba(212, 112, 10, 0.3)', background: 'rgba(212, 112, 10, 0.1)' }}>
+              <span className="text-xs font-bold max-w-[80px] truncate" style={{ color: '#D4700A' }}>
                 {customer.name}
               </span>
             </div>
@@ -457,62 +473,74 @@ const Payment = () => {
 
       <div className="p-4 space-y-4">
         {/* Order Summary Card */}
-        <div className="bg-white p-4 rounded-3xl shadow-sm border border-gray-100">
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="font-bold text-gray-800 flex items-center gap-2">
+        <div className="bg-white p-5 rounded-3xl shadow-sm border border-[var(--border-light)] relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-20 h-20 bg-[var(--bg-cream)] rounded-full -mr-10 -mt-10 opacity-50"></div>
+          <div className="flex items-center justify-between mb-4 relative z-10">
+            <h3 className="font-bold text-[var(--text-dark)] flex items-center gap-2 text-lg">
               🛒 Order Summary
             </h3>
-            <span className="text-sm text-gray-500">
+            <span className="text-sm font-medium px-2 py-1 rounded-lg bg-[var(--bg-cream)] text-[var(--accent-brown)]">
               {cart.length} item{cart.length !== 1 ? "s" : ""}
             </span>
           </div>
-          <div className="space-y-2 max-h-32 overflow-y-auto">
+          <div className="space-y-3 max-h-40 overflow-y-auto pr-2 custom-scrollbar">
             {cart.map((item) => (
               <div
                 key={item.cartId}
-                className="flex justify-between text-sm text-gray-600"
+                className="flex justify-between items-center text-sm group"
               >
-                <span>
-                  {item.quantity}x {item.name}
-                </span>
-                <span className="font-semibold">
-                  ₹{(item.price * item.quantity).toFixed(0)}
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-lg bg-[var(--bg-cream)] border border-[var(--border-light)] flex items-center justify-center text-lg">
+                    {item.image ? <img src={item.image} alt="" className="w-full h-full object-cover rounded-lg" /> : '🍰'}
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-[var(--text-dark)] font-medium">{item.name}</span>
+                    <span className="text-[var(--text-muted)] text-xs">Qty: {item.quantity}</span>
+                  </div>
+                </div>
+                <span className="font-bold text-[var(--text-brown)]">
+                  ₹{((Number(item.price) || Number(item.basePrice) || 0) * (Number(item.quantity) || 1)).toFixed(0)}
                 </span>
               </div>
             ))}
           </div>
         </div>
 
+
+
         {/* Delivery Address Display */}
         {orderType === "Delivery" && deliveryAddress && (
-          <div className="bg-white p-4 rounded-3xl shadow-sm border border-gray-100">
-            <div className="flex items-start gap-3">
-              <div className="w-10 h-10 bg-orange-100 rounded-xl flex items-center justify-center flex-shrink-0">
-                <FaMapMarkerAlt className="text-orange-600" />
+          <div className="bg-white p-5 rounded-3xl shadow-sm border border-[var(--border-light)]">
+            <div className="flex items-start gap-4">
+              <div className="w-12 h-12 bg-[var(--bg-cream)] rounded-xl flex items-center justify-center flex-shrink-0 border border-[var(--border-light)]">
+                <FaMapMarkerAlt className="text-[var(--accent-brown)]" size={20} />
               </div>
               <div className="flex-1">
-                <h4 className="font-bold text-gray-800 mb-1">
+                <h4 className="font-bold text-[var(--text-dark)] mb-1">
                   Delivery Address
                 </h4>
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-[var(--text-brown)] font-medium leading-relaxed">
                   {deliveryAddress.manualAddress}
                 </p>
                 {deliveryAddress.landmark && (
-                  <p className="text-xs text-gray-400 mt-1">
+                  <p className="text-xs text-[var(--text-muted)] mt-1 flex items-center gap-1">
+                    <span className="w-1.5 h-1.5 rounded-full bg-[var(--accent-gold)]"></span>
                     Landmark: {deliveryAddress.landmark}
                   </p>
                 )}
               </div>
               <button
                 onClick={() => navigate("/cart")}
-                className="text-xs text-orange-600 font-bold"
+                className="text-xs text-[var(--accent-gold)] font-bold uppercase tracking-wide border-b border-[var(--accent-gold)] pb-0.5"
               >
                 Change
               </button>
             </div>
             {freeDelivery && (
-              <div className="mt-3 flex items-center gap-2 bg-green-50 text-green-700 px-3 py-2 rounded-xl text-sm font-semibold">
-                <FaTruck />
+              <div className="mt-4 flex items-center gap-3 bg-green-50 text-green-700 px-4 py-3 rounded-2xl text-sm font-semibold border border-green-100">
+                <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center">
+                  <FaTruck size={14} />
+                </div>
                 <span>🎉 Free Delivery Applied!</span>
               </div>
             )}
@@ -528,7 +556,7 @@ const Payment = () => {
 
         {/* Payment Methods */}
         <div>
-          <h3 className="font-bold text-gray-800 text-base mb-3 flex items-center gap-2">
+          <h3 className="font-bold text-[var(--text-dark)] text-lg mb-4 flex items-center gap-2 pl-1">
             💳 Payment Method
           </h3>
           <div className="space-y-3">
@@ -536,36 +564,39 @@ const Payment = () => {
               <button
                 key={method.id}
                 onClick={() => setPaymentMethod(method.id)}
-                className={`w-full p-5 rounded-3xl border-2 flex items-center gap-4 transition-all active:scale-[0.98] ${
-                  paymentMethod === method.id
-                    ? "border-orange-500 bg-orange-50"
-                    : "border-gray-200 bg-white"
-                }`}
-              >
-                <div
-                  className={`w-14 h-14 rounded-2xl flex items-center justify-center ${
-                    paymentMethod === method.id
-                      ? "bg-gradient-to-br from-orange-500 to-orange-600 text-white"
-                      : "bg-gray-100 text-gray-500"
+                className={`w-full p-5 rounded-3xl border-2 flex items-center gap-4 transition-all active:scale-[0.98] relative overflow-hidden group ${paymentMethod === method.id
+                  ? "border-[var(--accent-gold)] bg-[#FEF3E2]"
+                  : "border-[var(--border-light)] bg-white hover:border-[#D4B87A]"
                   }`}
+              >
+                {paymentMethod === method.id && (
+                  <div className="absolute top-0 right-0 p-2">
+                    <div className="bg-[var(--accent-gold)] text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm">SELECTED</div>
+                  </div>
+                )}
+
+                <div
+                  className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-colors ${paymentMethod === method.id
+                    ? "bg-[var(--accent-gold)] text-white shadow-lg shadow-[#C9A962]/30"
+                    : "bg-[var(--bg-cream)] text-[var(--text-muted)] group-hover:bg-[#F5EAD6]"
+                    }`}
                 >
                   <method.icon size={24} />
                 </div>
                 <div className="flex-1 text-left">
-                  <p className="font-bold text-gray-800 text-base">
+                  <p className={`font-bold text-base transition-colors ${paymentMethod === method.id ? "text-[var(--text-dark)]" : "text-[var(--text-brown)]"}`}>
                     {method.label}
                   </p>
-                  <p className="text-sm text-gray-500">{method.desc}</p>
+                  <p className={`text-sm ${paymentMethod === method.id ? "text-[var(--accent-brown)]" : "text-[var(--text-light)]"}`}>{method.desc}</p>
                 </div>
                 <div
-                  className={`w-7 h-7 rounded-full border-2 flex items-center justify-center ${
-                    paymentMethod === method.id
-                      ? "border-orange-500 bg-orange-500"
-                      : "border-gray-300"
-                  }`}
+                  className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors ${paymentMethod === method.id
+                    ? "border-[var(--accent-gold)]"
+                    : "border-[var(--border-card)]"
+                    }`}
                 >
                   {paymentMethod === method.id && (
-                    <div className="w-2.5 h-2.5 bg-white rounded-full"></div>
+                    <div className="w-3 h-3 bg-[var(--accent-gold)] rounded-full shadow-sm"></div>
                   )}
                 </div>
               </button>
@@ -574,42 +605,47 @@ const Payment = () => {
         </div>
 
         {/* Bill Summary - Simplified (No Tax, No Platform Fee) */}
-        <div className="bg-white p-5 rounded-3xl shadow-sm border border-gray-100">
-          <h3 className="font-bold text-gray-800 text-base mb-4">
+        <div className="bg-white p-6 rounded-3xl shadow-sm border border-[var(--border-light)] mb-20 relative">
+          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-[var(--accent-gold)] to-transparent opacity-30"></div>
+          <h3 className="font-bold text-[var(--text-dark)] text-lg mb-5 flex items-center gap-2">
             🧾 Bill Details
           </h3>
           <div className="space-y-3 text-base">
-            <div className="flex justify-between text-gray-600">
+            <div className="flex justify-between text-[var(--text-brown)]">
               <span>Item Total</span>
-              <span className="font-semibold">₹{subtotal.toFixed(0)}</span>
+              <span className="font-semibold text-[var(--text-dark)]">₹{(Number(subtotal) || 0).toFixed(0)}</span>
             </div>
             {orderType === "Delivery" && (
-              <div className="flex justify-between text-gray-500">
-                <span className="flex items-center gap-1">
-                  <FaTruck size={12} />
+              <div className="flex justify-between text-[var(--text-muted)]">
+                <span className="flex items-center gap-1.5">
+                  <div className="w-5 h-5 rounded-full bg-[var(--bg-cream)] flex items-center justify-center">
+                    <FaTruck size={10} />
+                  </div>
                   Delivery Fee
                 </span>
                 {freeDelivery ? (
-                  <span className="text-green-600 font-semibold">FREE</span>
+                  <span className="text-green-600 font-semibold bg-green-50 px-2 py-0.5 rounded-lg text-xs">FREE</span>
                 ) : (
-                  <span>₹{deliveryFee.toFixed(0)}</span>
+                  <span>₹{(Number(deliveryFee) || 0).toFixed(0)}</span>
                 )}
               </div>
             )}
             {discount > 0 && (
-              <div className="flex justify-between text-green-600 font-semibold">
-                <span className="flex items-center gap-1">
-                  <FaGift size={12} />
+              <div className="flex justify-between text-green-600 font-semibold bg-green-50/50 p-2 rounded-lg border border-green-100/50">
+                <span className="flex items-center gap-1.5">
+                  <div className="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center">
+                    <FaGift size={10} />
+                  </div>
                   Discount
                 </span>
-                <span>- ₹{discount.toFixed(0)}</span>
+                <span>- ₹{(Number(discount) || 0).toFixed(0)}</span>
               </div>
             )}
-            <div className="border-t-2 border-dashed border-gray-200 pt-4 mt-4">
-              <div className="flex justify-between text-xl font-black text-gray-900">
+            <div className="border-t-2 border-dashed border-[var(--border-light)] pt-4 mt-4">
+              <div className="flex justify-between text-xl font-bold text-[var(--text-dark)] items-center">
                 <span>To Pay</span>
-                <span className="text-orange-600">
-                  ₹{grandTotal.toFixed(0)}
+                <span className="text-[var(--accent-brown)] text-2xl">
+                  ₹{(Number(grandTotal) || 0).toFixed(0)}
                 </span>
               </div>
             </div>
@@ -618,17 +654,22 @@ const Payment = () => {
       </div>
 
       {/* Checkout Button - Fixed */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-xl p-4 shadow-[0_-10px_40px_rgba(0,0,0,0.1)] border-t border-gray-100 safe-area-bottom">
+      <div className="fixed bottom-0 left-0 right-0 p-4 z-20 safe-area-bottom"
+        style={{ background: 'linear-gradient(180deg, transparent 0%, #FFFFFF 20%, #FFFFFF 100%)' }}>
         <button
           onClick={handleCheckout}
           disabled={loading}
-          className="w-full h-16 bg-gradient-to-r from-orange-600 via-orange-500 to-amber-500 text-white font-bold text-lg rounded-2xl shadow-xl shadow-orange-300/50 active:scale-[0.98] transition-all flex justify-between items-center px-6 disabled:opacity-50"
+          className="w-full h-16 text-white font-bold text-lg rounded-2xl active:scale-[0.98] transition-all flex justify-between items-center px-6 disabled:opacity-50 disabled:cursor-not-allowed"
+          style={{
+            background: 'linear-gradient(135deg, #D4700A 0%, #E8923A 100%)',
+            boxShadow: '0 8px 32px rgba(212, 112, 10, 0.4)'
+          }}
         >
           <div className="flex items-center gap-3">
             {paymentMethod === "Razorpay" ? (
-              <FaCreditCard size={22} />
+              <FaCreditCard size={22} className="opacity-90" />
             ) : (
-              <FaMoneyBillWave size={22} />
+              <FaMoneyBillWave size={22} className="opacity-90" />
             )}
             <span>
               {loading
@@ -638,8 +679,8 @@ const Payment = () => {
                   : "Place Order (COD)"}
             </span>
           </div>
-          <span className="bg-white/25 px-5 py-2 rounded-xl font-black text-xl">
-            ₹{grandTotal.toFixed(0)}
+          <span className="bg-white/20 backdrop-blur-sm px-5 py-2 rounded-xl font-black text-xl border border-white/10">
+            ₹{(Number(grandTotal) || 0).toFixed(0)}
           </span>
         </button>
       </div>
@@ -669,11 +710,7 @@ const Payment = () => {
         />
       )}
 
-      {/* Custom CSS */}
-      <style>{`
-        .safe-area-top { padding-top: env(safe-area-inset-top); }
-        .safe-area-bottom { padding-bottom: env(safe-area-inset-bottom); }
-      `}</style>
+
 
       <Footer />
     </div>

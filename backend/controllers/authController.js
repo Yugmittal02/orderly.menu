@@ -5,7 +5,7 @@ const jwt = require('jsonwebtoken');
 exports.registerCustomer = async (req, res) => {
     try {
         console.log('registerCustomer called with body:', req.body);
-        const { name, phone } = req.body;
+        const { name, phone, password } = req.body;
         
         // Validate required fields
         if (!name || !phone) {
@@ -15,8 +15,20 @@ exports.registerCustomer = async (req, res) => {
         
         let user = await User.findOne({ phone, role: 'customer' });
         console.log('Existing user lookup result:', user);
+        
         if (user) {
-            // Return existing customer with token
+            // Returning customer - verify password if set
+            if (user.password && password) {
+                const isMatch = await user.comparePassword(password);
+                if (!isMatch) {
+                    return res.status(400).json({ message: 'Incorrect password' });
+                }
+            } else if (user.password && !password) {
+                // User has password but didn't provide one
+                return res.status(400).json({ message: 'Password required for this account' });
+            }
+            // If user has no password, allow login (legacy users)
+            
             const token = jwt.sign(
                 { userId: user._id, role: user.role }, 
                 process.env.JWT_SECRET, 
@@ -25,7 +37,13 @@ exports.registerCustomer = async (req, res) => {
             return res.json({ token, user, message: 'Welcome back!' });
         }
 
-        user = new User({ name, phone, role: 'customer' });
+        // New customer - create with optional password
+        user = new User({ 
+            name, 
+            phone, 
+            role: 'customer',
+            password: password || undefined  // Only set if provided
+        });
         await user.save();
         console.log('New user created:', user);
         

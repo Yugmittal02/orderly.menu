@@ -1,76 +1,166 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { useNavigate } from 'react-router-dom';
-import { FaUtensils, FaArrowRight } from 'react-icons/fa';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { FaArrowRight, FaUser, FaPhone, FaBirthdayCake } from 'react-icons/fa';
 
 const Login = () => {
     const [name, setName] = useState('');
     const [phone, setPhone] = useState('');
-    const { login, register } = useAuth();
+    const { enterAsCustomer } = useAuth();
     const navigate = useNavigate();
-    const [isRegistering, setIsRegistering] = useState(true); // Default to register flow for new users
+    const location = useLocation();
+    const [loading, setLoading] = useState(false);
+    const [step, setStep] = useState(1); // 1: Intro/Phone, 2: Name (if new)
+    const { customer } = useAuth();
+
+    useEffect(() => {
+        if (customer) {
+            const from = location.state?.from || '/dashboard';
+            navigate(from, { replace: true });
+        }
+    }, [customer, navigate, location]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        if (isRegistering) {
-            const res = await register(name, phone);
-            if (res.success) navigate('/home');
-            else {
-                // If user exists, try login
-                if (res.message === 'User already exists') {
-                    const loginRes = await login(phone);
-                    if (loginRes.success) navigate('/home');
-                    else alert(loginRes.message);
-                } else {
-                    alert(res.message);
-                }
+        setLoading(true);
+
+        try {
+            // enterAsCustomer handles both login and registration in the backend
+            // It searches by phone, if exists -> logs in, if not -> creates new
+            const res = await enterAsCustomer(name, phone);
+
+            if (res.success) {
+                const from = location.state?.from || '/dashboard';
+                navigate(from, { replace: true });
+            } else {
+                alert(res.message);
             }
-        } else {
-            const res = await login(phone);
-            if (res.success) navigate('/home');
-            else alert(res.message);
+        } catch (err) {
+            console.error(err);
+            alert("Something went wrong. Please try again.");
+        } finally {
+            setLoading(false);
         }
     };
 
     return (
-        <div className="min-h-screen bg-orange-50 flex items-center justify-center p-4">
-             <div className="bg-white w-full max-w-sm rounded-[2.5rem] p-8 shadow-2xl relative overflow-hidden animate-slide-up">
-                <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-orange-400 to-red-500"></div>
-                <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mb-4 mx-auto text-3xl">
-                    👋
+        <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden bg-[#FAF7F2]">
+
+            {/* Background Elements */}
+            <div className="absolute inset-0 z-0">
+                <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-[#D4700A] opacity-5 rounded-full blur-[100px] -translate-y-1/2 translate-x-1/3"></div>
+                <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-[#C9A962] opacity-5 rounded-full blur-[100px] translate-y-1/3 -translate-x-1/4"></div>
+
+                {/* Floating Icons Pattern */}
+                <div className="absolute inset-0 opacity-[0.03]"
+                    style={{ backgroundImage: 'radial-gradient(#4A2C1A 1px, transparent 1px)', backgroundSize: '30px 30px' }}>
                 </div>
-                <h2 className="text-3xl font-extrabold text-gray-900 mb-2 text-center">Let's Eat!</h2>
-                <p className="text-gray-500 text-sm mb-8 text-center">Tell us your name to start.</p>
-                
-                <form onSubmit={handleSubmit} className="space-y-4">
-                    <div>
-                        <label className="text-xs font-bold text-gray-400 uppercase ml-2">Your Name</label>
-                        <input 
-                            type="text" 
-                            value={name}
-                            onChange={(e) => setName(e.target.value)}
-                            className="w-full bg-gray-50 border border-gray-200 rounded-2xl px-5 py-4 font-bold text-lg focus:ring-2 focus:ring-orange-500 outline-none text-gray-800"
-                            placeholder="e.g. Rahul"
-                            required
-                        />
+            </div>
+
+            <div className="w-full max-w-4xl bg-white rounded-[40px] shadow-2xl overflow-hidden relative z-10 flex flex-col md:flex-row min-h-[600px] animate-fade-in-up">
+
+                {/* Left Side - Visual/Brand */}
+                <div className="md:w-1/2 bg-gradient-to-br from-[#1C1C1C] to-[#2D1F16] p-12 text-white flex flex-col justify-between relative overflow-hidden">
+                    <div className="absolute top-0 left-0 w-full h-full opacity-20">
+                        <img src="https://images.unsplash.com/photo-1509440159596-0249088772ff?w=800&fit=crop"
+                            alt="Bakery Background"
+                            className="w-full h-full object-cover" />
                     </div>
-                    <div>
-                        <label className="text-xs font-bold text-gray-400 uppercase ml-2">Phone Number</label>
-                        <input 
-                            type="tel" 
-                            value={phone}
-                            onChange={(e) => setPhone(e.target.value)}
-                            className="w-full bg-gray-50 border border-gray-200 rounded-2xl px-5 py-4 font-bold text-lg focus:ring-2 focus:ring-orange-500 outline-none text-gray-800"
-                            placeholder="9876543210"
-                            maxLength="10"
-                            required
-                        />
+
+                    <div className="relative z-10">
+                        <div className="flex items-center gap-3 mb-8">
+                            <span className="text-4xl">🧁</span>
+                            <h1 className="text-2xl font-script tracking-wide">Sewa Shubham</h1>
+                        </div>
+
+                        <h2 className="text-4xl md:text-5xl font-bold leading-tight mb-6">
+                            Taste the <span className="text-[#D4700A]">Magic</span> <br />
+                            in Every Bite
+                        </h2>
+
+                        <p className="text-white/70 text-lg leading-relaxed max-w-sm">
+                            Join our community of food lovers. Order seamlessly, track deliveries, and enjoy exclusive member perks.
+                        </p>
                     </div>
-                    <button type="submit"
-                        className="w-full bg-gradient-to-r from-orange-600 to-amber-500 text-white font-bold text-lg py-4 rounded-2xl shadow-xl shadow-orange-200 active:scale-95 transition-transform mt-4 flex items-center justify-center gap-2">
-                        Enter Cafe <FaArrowRight />
-                    </button>
-                </form>
+
+                    <div className="relative z-10 mt-12 flex gap-4">
+                        <div className="bg-white/10 backdrop-blur-md p-4 rounded-2xl flex-1 border border-white/20">
+                            <h3 className="text-2xl font-bold text-[#D4700A]">500+</h3>
+                            <p className="text-xs text-white/60 uppercase tracking-wider mt-1">Daily Happy Customers</p>
+                        </div>
+                        <div className="bg-white/10 backdrop-blur-md p-4 rounded-2xl flex-1 border border-white/20">
+                            <h3 className="text-2xl font-bold text-[#D4700A]">4.9★</h3>
+                            <p className="text-xs text-white/60 uppercase tracking-wider mt-1">Average Rating</p>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Right Side - Form */}
+                <div className="md:w-1/2 p-8 md:p-12 flex flex-col justify-center bg-white relative">
+                    <div className="max-w-xs mx-auto w-full">
+                        <div className="mb-8 text-center md:text-left">
+                            <h3 className="text-2xl font-script text-[#1C1C1C] mb-2">Welcome Back!</h3>
+                            <p className="text-[#7E7E7E]">Please enter your details to continue</p>
+                        </div>
+
+                        <form onSubmit={handleSubmit} className="space-y-6">
+
+                            <div className="space-y-2">
+                                <label className="text-xs font-bold uppercase text-[#8B7355] ml-1">Your Name</label>
+                                <div className="relative group">
+                                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                                        <FaUser className="text-[#D4B896] group-focus-within:text-[#D4700A] transition-colors" />
+                                    </div>
+                                    <input
+                                        type="text"
+                                        value={name}
+                                        onChange={(e) => setName(e.target.value)}
+                                        className="w-full bg-[#FAF7F2] border-2 border-[#E8E3DB] text-[#1C1C1C] text-lg rounded-xl pl-11 pr-4 py-3.5 outline-none transition-all focus:border-[#D4700A] focus:bg-white placeholder:text-[#D4B896]"
+                                        placeholder="John Doe"
+                                        required
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="space-y-2">
+                                <label className="text-xs font-bold uppercase text-[#8B7355] ml-1">Phone Number</label>
+                                <div className="relative group">
+                                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                                        <FaPhone className="text-[#D4B896] group-focus-within:text-[#D4700A] transition-colors" />
+                                    </div>
+                                    <input
+                                        type="tel"
+                                        value={phone}
+                                        onChange={(e) => setPhone(e.target.value)}
+                                        className="w-full bg-[#FAF7F2] border-2 border-[#E8E3DB] text-[#1C1C1C] text-lg rounded-xl pl-11 pr-4 py-3.5 outline-none transition-all focus:border-[#D4700A] focus:bg-white placeholder:text-[#D4B896]"
+                                        placeholder="98765 43210"
+                                        maxLength="10"
+                                        required
+                                    />
+                                </div>
+                            </div>
+
+                            <button
+                                type="submit"
+                                disabled={loading}
+                                className="w-full bg-gradient-to-r from-[#D4700A] to-[#E8923A] text-white font-bold text-lg py-4 rounded-xl shadow-lg shadow-[#D4700A]/30 hover:shadow-[#D4700A]/40 active:scale-[0.98] transition-all flex items-center justify-center gap-2 group disabled:opacity-70 disabled:cursor-not-allowed mt-4"
+                            >
+                                {loading ? (
+                                    <div className="w-6 h-6 border-3 border-white border-t-transparent rounded-full animate-spin"></div>
+                                ) : (
+                                    <>
+                                        Start Ordering
+                                        <FaArrowRight className="group-hover:translate-x-1 transition-transform" />
+                                    </>
+                                )}
+                            </button>
+                        </form>
+
+                        <p className="text-xs text-center text-[#9CA3AF] mt-8">
+                            By continuing, you adhere to our <span className="underline cursor-pointer hover:text-[#D4700A]">Terms</span> and <span className="underline cursor-pointer hover:text-[#D4700A]">Privacy Policy</span>.
+                        </p>
+                    </div>
+                </div>
             </div>
         </div>
     );

@@ -1,11 +1,12 @@
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { FaUtensils, FaUserShield, FaArrowRight } from 'react-icons/fa';
+import { motion } from 'framer-motion';
+import { FaArrowRight, FaStar, FaClock, FaShieldAlt } from 'react-icons/fa';
 
 const Welcome = () => {
     const navigate = useNavigate();
-    const { customer } = useAuth(); // Assuming useAuth is exported from context
+    const { customer } = useAuth();
 
     useEffect(() => {
         if (customer) {
@@ -14,89 +15,141 @@ const Welcome = () => {
     }, [customer, navigate]);
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-amber-50 flex flex-col items-center justify-center p-6 text-gray-800 relative overflow-hidden">
-            {/* Animated Background Elements */}
-            <div className="absolute inset-0 overflow-hidden pointer-events-none">
-                {/* Floating food icons with animations */}
-                {/* Floating food images with animations - Optimized for Mobile */}
-                <img src="https://ik.imagekit.io/ayushrathore1/bun?updatedAt=1768506241846" alt="Food" className="absolute top-[5%] left-[5%] w-16 h-16 md:w-24 md:h-24 object-cover rounded-full opacity-60 animate-float-slow shadow-lg" />
-                <img src="https://ik.imagekit.io/ayushrathore1/drinks?updatedAt=1768506197569" alt="Drinks" loading="lazy" className="absolute top-[15%] right-[5%] w-14 h-14 md:w-20 md:h-20 object-cover rounded-full opacity-50 animate-float-medium shadow-lg" />
-                <img src="https://ik.imagekit.io/ayushrathore1/bun?updatedAt=1768506241846" alt="Bun" className="absolute top-[45%] left-[-5%] md:left-[5%] w-20 h-20 md:w-28 md:h-28 object-cover rounded-full opacity-60 animate-float-fast shadow-lg" />
-                
-                <img src="https://ik.imagekit.io/ayushrathore1/drinks?updatedAt=1768506197569" alt="Drinks" loading="lazy" className="absolute bottom-[15%] right-[5%] w-24 h-24 md:w-32 md:h-32 object-cover rounded-full opacity-50 animate-float-slow shadow-lg" />
-                <img src="https://ik.imagekit.io/ayushrathore1/drinks?updatedAt=1768506197569" alt="Drinks" loading="lazy" className="absolute bottom-[35%] left-[5%] w-16 h-16 md:w-24 md:h-24 object-cover rounded-full opacity-40 animate-float-medium shadow-lg" />
-                <img src="https://ik.imagekit.io/ayushrathore1/bun?updatedAt=1768506241846" alt="Bun" loading="lazy" className="absolute top-[55%] right-[-10%] md:right-[25%] w-14 h-14 md:w-20 md:h-20 object-cover rounded-full opacity-50 animate-float-fast shadow-lg" />
-                
-                {/* Glowing orbs */}
-                <div className="absolute top-1/4 left-1/4 w-64 h-64 md:w-96 md:h-96 bg-orange-200/20 rounded-full blur-[80px] md:blur-[100px]"></div>
-                <div className="absolute bottom-1/4 right-1/4 w-64 h-64 md:w-96 md:h-96 bg-amber-200/20 rounded-full blur-[80px] md:blur-[100px]"></div>
+        <div className="min-h-screen flex flex-col relative overflow-hidden">
+
+            {/* Full-bleed Hero Background */}
+            <div className="absolute inset-0 z-0">
+                <img
+                    src="https://images.unsplash.com/photo-1509440159596-0249088772ff?w=1400&h=900&fit=crop&q=85"
+                    alt="Fresh bakery"
+                    className="w-full h-full object-cover"
+                />
+                {/* Dark gradient overlay for text contrast */}
+                <div className="absolute inset-0"
+                    style={{
+                        background: 'linear-gradient(180deg, rgba(26,22,18,0.3) 0%, rgba(26,22,18,0.5) 40%, rgba(26,22,18,0.85) 100%)'
+                    }}
+                />
             </div>
-            
+
             {/* Main Content */}
-            <div className="relative z-10 text-center max-w-md animate-fade-in-up px-4">
-                {/* Logo with glassmorphism */}
-                <div className="w-24 h-24 md:w-32 md:h-32 bg-white rounded-[2rem] flex items-center justify-center mx-auto mb-6 md:mb-8 shadow-2xl shadow-orange-100 border-4 border-orange-50 animate-bounce-gentle">
-                    <FaUtensils className="text-4xl md:text-5xl text-orange-500" />
-                </div>
-                
-                {/* Branding */}
-                <h1 className="text-4xl md:text-6xl font-black tracking-tight mb-2 drop-shadow-sm text-gray-800">
-                    Shubham<span className="text-orange-500">Pattis</span>
-                </h1>
-                <p className="text-xl font-bold tracking-widest uppercase text-gray-400 mb-3">
+            <div className="flex-1 flex flex-col items-center justify-end relative z-10 text-center px-6 pb-12 pt-24">
+
+                {/* Brand Logo */}
+                <motion.div
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ duration: 0.6, ease: 'easeOut' }}
+                    className="w-20 h-20 rounded-2xl flex items-center justify-center mb-6"
+                    style={{
+                        background: 'rgba(255,255,255,0.15)',
+                        backdropFilter: 'blur(12px)',
+                        border: '1.5px solid rgba(255,255,255,0.25)',
+                    }}
+                >
+                    <span className="text-4xl">🧁</span>
+                </motion.div>
+
+                {/* Branding — Staggered text reveal */}
+                <motion.h1
+                    initial={{ opacity: 0, y: 30 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.7, delay: 0.2 }}
+                    className="text-5xl md:text-7xl font-display mb-2 text-white"
+                    style={{ textShadow: '0 4px 30px rgba(0,0,0,0.4)' }}
+                >
+                    Sewa Shubham
+                </motion.h1>
+
+                <motion.p
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.6, delay: 0.4 }}
+                    className="text-sm font-semibold tracking-[0.3em] uppercase mb-6"
+                    style={{ color: 'rgba(232, 146, 58, 0.95)' }}
+                >
                     Bakery & Cafe
-                </p>
-                <p className="text-base text-gray-500 mb-10 font-medium">
-                    ✨ Fresh Bakes • Delicious Moments • Happy Memories ✨
-                </p>
-                
+                </motion.p>
+
+                {/* Tagline */}
+                <motion.p
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ duration: 0.6, delay: 0.6 }}
+                    className="text-base mb-8 max-w-sm leading-relaxed"
+                    style={{ color: 'rgba(255,255,255,0.75)' }}
+                >
+                    Fresh bakes crafted with love — delivering delicious moments & happy memories since 2002.
+                </motion.p>
+
+                {/* Trust Badges — Glassmorphism */}
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5, delay: 0.7 }}
+                    className="flex flex-wrap justify-center gap-3 mb-8"
+                >
+                    {[
+                        { icon: <FaStar size={12} />, label: '4.9 Rating', color: '#E8923A' },
+                        { icon: <FaClock size={12} />, label: '30min Delivery', color: '#E8923A' },
+                        { icon: <FaShieldAlt size={12} />, label: 'Safe Payment', color: '#22C55E' },
+                    ].map((badge, i) => (
+                        <div
+                            key={i}
+                            className="flex items-center gap-2 px-4 py-2 rounded-full"
+                            style={{
+                                background: 'rgba(255,255,255,0.12)',
+                                backdropFilter: 'blur(12px)',
+                                border: '1px solid rgba(255,255,255,0.15)',
+                            }}
+                        >
+                            <span style={{ color: badge.color }}>{badge.icon}</span>
+                            <span className="text-xs font-semibold text-white">{badge.label}</span>
+                        </div>
+                    ))}
+                </motion.div>
+
                 {/* CTA Buttons */}
-                <div className="space-y-4">
-                    <button 
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5, delay: 0.9 }}
+                    className="w-full max-w-sm flex flex-col gap-3"
+                >
+                    <button
                         onClick={() => navigate('/menu')}
-                        className="group w-full bg-gradient-to-r from-orange-500 to-amber-500 text-white font-bold text-lg py-4 px-8 rounded-2xl shadow-xl shadow-orange-200 hover:shadow-2xl hover:shadow-orange-300 transition-all duration-300 active:scale-95 flex items-center justify-center gap-3 hover:gap-5"
+                        className="group w-full text-white font-bold text-lg py-4 px-10 rounded-2xl shadow-xl transition-all duration-300 active:scale-95 flex items-center justify-center gap-3"
+                        style={{
+                            background: 'linear-gradient(135deg, #D4700A 0%, #E8923A 100%)',
+                            boxShadow: '0 12px 40px rgba(212, 112, 10, 0.4)'
+                        }}
                     >
-                        <span>Browse Our Menu</span>
-                        <FaArrowRight className="transition-transform group-hover:translate-x-1" />
+                        <span>Explore Our Menu</span>
+                        <FaArrowRight className="transition-transform group-hover:translate-x-2" size={16} />
                     </button>
-                    
-{/* Admin Login button removed as per redesign */}
-                </div>
-                
-                {/* Footer */}
-                <p className="mt-14 text-sm text-gray-400 font-medium">
-                    Made with ❤️ for our lovely customers
+
+                    <button
+                        onClick={() => navigate('/login')}
+                        className="w-full font-semibold text-sm py-3 px-6 rounded-xl transition-all active:scale-95"
+                        style={{
+                            background: 'rgba(255,255,255,0.12)',
+                            backdropFilter: 'blur(8px)',
+                            border: '1px solid rgba(255,255,255,0.2)',
+                            color: 'rgba(255,255,255,0.9)',
+                        }}
+                    >
+                        Already a customer? Sign In
+                    </button>
+                </motion.div>
+            </div>
+
+            {/* Footer */}
+            <div className="relative z-10 text-center pb-8 px-6">
+                <p className="text-xs" style={{ color: 'rgba(255,255,255,0.35)' }}>
+                    © {new Date().getFullYear()} Sewa Shubham Bakery. All rights reserved.
                 </p>
             </div>
 
-            {/* Custom CSS for animations */}
-            <style>{`
-                @keyframes float-slow {
-                    0%, 100% { transform: translateY(0) rotate(0deg); }
-                    50% { transform: translateY(-20px) rotate(5deg); }
-                }
-                @keyframes float-medium {
-                    0%, 100% { transform: translateY(0) rotate(0deg); }
-                    50% { transform: translateY(-15px) rotate(-5deg); }
-                }
-                @keyframes float-fast {
-                    0%, 100% { transform: translateY(0) rotate(0deg); }
-                    50% { transform: translateY(-10px) rotate(3deg); }
-                }
-                @keyframes fade-in-up {
-                    from { opacity: 0; transform: translateY(30px); }
-                    to { opacity: 1; transform: translateY(0); }
-                }
-                @keyframes bounce-gentle {
-                    0%, 100% { transform: translateY(0); }
-                    50% { transform: translateY(-8px); }
-                }
-                .animate-float-slow { animation: float-slow 6s ease-in-out infinite; }
-                .animate-float-medium { animation: float-medium 4s ease-in-out infinite; }
-                .animate-float-fast { animation: float-fast 3s ease-in-out infinite; }
-                .animate-fade-in-up { animation: fade-in-up 0.8s ease-out; }
-                .animate-bounce-gentle { animation: bounce-gentle 3s ease-in-out infinite; }
-            `}</style>
         </div>
     );
 };
