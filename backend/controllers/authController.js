@@ -4,30 +4,26 @@ const jwt = require('jsonwebtoken');
 // Customer registration (simple, for order tracking)
 exports.registerCustomer = async (req, res) => {
     try {
-        console.log('registerCustomer called with body:', req.body);
         const { name, phone, password } = req.body;
         
-        // Validate required fields
         if (!name || !phone) {
-            console.log('Validation failed - name or phone missing');
             return res.status(400).json({ message: 'Name and phone are required' });
         }
         
         let user = await User.findOne({ phone, role: 'customer' });
-        console.log('Existing user lookup result:', user);
         
         if (user) {
-            // Returning customer - verify password if set
+            // Returning customer
             if (user.password && password) {
                 const isMatch = await user.comparePassword(password);
-                if (!isMatch) {
-                    return res.status(400).json({ message: 'Incorrect password' });
-                }
+                if (!isMatch) return res.status(400).json({ message: 'Incorrect password' });
             } else if (user.password && !password) {
-                // User has password but didn't provide one
                 return res.status(400).json({ message: 'Password required for this account' });
             }
-            // If user has no password, allow login (legacy users)
+            
+            // Log login activity
+            user.activity.push({ type: 'login', description: 'Logged in', timestamp: new Date() });
+            await user.save();
             
             const token = jwt.sign(
                 { userId: user._id, role: user.role }, 
@@ -37,15 +33,15 @@ exports.registerCustomer = async (req, res) => {
             return res.json({ token, user, message: 'Welcome back!' });
         }
 
-        // New customer - create with optional password
+        // New customer
         user = new User({ 
             name, 
             phone, 
             role: 'customer',
-            password: password || undefined  // Only set if provided
+            password: password || undefined,
+            activity: [{ type: 'signup', description: 'Account created', timestamp: new Date() }]
         });
         await user.save();
-        console.log('New user created:', user);
         
         const token = jwt.sign(
             { userId: user._id, role: user.role }, 
@@ -66,14 +62,10 @@ exports.adminLogin = async (req, res) => {
         const { email, password } = req.body;
         
         const user = await User.findOne({ email, role: 'admin' });
-        if (!user) {
-            return res.status(400).json({ message: 'Invalid credentials' });
-        }
+        if (!user) return res.status(400).json({ message: 'Invalid credentials' });
 
         const isMatch = await user.comparePassword(password);
-        if (!isMatch) {
-            return res.status(400).json({ message: 'Invalid credentials' });
-        }
+        if (!isMatch) return res.status(400).json({ message: 'Invalid credentials' });
 
         const token = jwt.sign(
             { userId: user._id, role: user.role }, 
@@ -93,14 +85,10 @@ exports.createAdmin = async (req, res) => {
         const { name, email, password, phone } = req.body;
         
         const existingAdmin = await User.findOne({ email });
-        if (existingAdmin) {
-            return res.status(400).json({ message: 'Admin already exists' });
-        }
+        if (existingAdmin) return res.status(400).json({ message: 'Admin already exists' });
 
         const admin = new User({ 
-            name, 
-            email, 
-            password, 
+            name, email, password, 
             phone: phone || '0000000000',
             role: 'admin' 
         });
@@ -118,5 +106,54 @@ exports.getProfile = async (req, res) => {
         res.json(user);
     } catch (error) {
         res.status(500).json({ message: 'Server error' });
+    }
+};
+
+// ---- Cart Sync ----
+
+// Save cart to DB
+exports.syncCart = async (req, res) => {
+    try {
+        const { cart } = req.body;
+        await User.findByIdAndUpdate(req.user.userId, { cart: cart || [] });
+        res.json({ message: 'Cart synced' });
+    } catch (error) {
+        res.status(500).json({ message: 'Error syncing cart', error: error.message });
+    }
+};
+
+// Get cart from DB
+exports.getCart = async (req, res) => {
+    try {
+        const user = await User.findById(req.user.userId).select('cart');
+        res.json(user?.cart || []);
+    } catch (error) {
+        res.status(500).json({ message: 'Error fetching cart', error: error.message });
+    }
+};
+
+// ---- Activity Log ----
+
+// Log an activity
+exports.logActivity = async (req, res) => {
+    try {
+        const { type, description, orderId, amount } = req.body;
+        await User.findByIdAndUpdate(req.user.userId, {
+            $push: { activity: { type, description, orderId, amount, timestamp: new Date() } }
+        });
+        res.json({ message: 'Activity logged' });
+    } catch (error) {
+        res.status(500).json({ message: 'Error logging activity', error: error.message });
+    }
+};
+
+// Get activity log
+exports.getActivity = async (req, res) => {
+    try {
+        const user = await User.findById(req.user.userId).select('activity');
+        const sorted = (user?.activity || []).sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+        res.json(sorted);
+    } catch (error) {
+        res.status(500).json({ message: 'Error fetching activity', error: error.message });
     }
 };
