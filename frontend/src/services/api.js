@@ -29,6 +29,7 @@ export const updateProduct = (id, data) => API.put(`/products/${id}`, data);
 export const deleteProduct = (id) => API.delete(`/products/${id}`);
 export const toggleProductAvailability = (id) =>
   API.patch(`/products/${id}/toggle-availability`);
+export const deleteAllProducts = () => API.delete("/products/all");
 
 // Orders
 export const createOrder = (data) => API.post("/orders", data);
@@ -94,5 +95,14 @@ export const uploadPaymentScreenshot = (orderId, screenshotUrl) =>
 export const verifyPaymentScreenshotAdmin = (orderId, verified) =>
   API.put(`/orders/${orderId}/verify-payment`, { verified });
 
+// Cart sync
+export const syncCartToDB = (cart) => API.put("/auth/cart", { cart });
+export const getCartFromDB = () => API.get("/auth/cart");
+
+// Activity log
+export const logUserActivity = (data) => API.post("/auth/activity", data);
+export const getUserActivity = () => API.get("/auth/activity");
+
 export default API;
+
 

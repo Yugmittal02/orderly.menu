@@ -10,7 +10,7 @@ const AdsBanner = () => {
     const [loading, setLoading] = useState(true);
 
     const gradients = [
-        'linear-gradient(135deg, #D4700A 0%, #E8923A 100%)',
+        'linear-gradient(135deg, #C97B4B 0%, #E8956A 100%)',
         'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
         'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
         'linear-gradient(135deg, #11998e 0%, #38ef7d 100%)',
@@ -26,7 +26,7 @@ const AdsBanner = () => {
             title: 'Fresh Cakes Daily',
             subtitle: 'Made with love & premium ingredients',
             description: 'Order Now & Get 10% OFF',
-            image: 'https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=600&h=400&fit=crop',
+            image: 'https://images.unsplash.com/photo-1621303837174-89787a7d4729?w=600&h=400&fit=crop&q=80',
             bgGradient: gradients[0],
             link: '/category/cake',
             badge: '🔥 HOT',
@@ -37,7 +37,7 @@ const AdsBanner = () => {
             title: 'Birthday Specials',
             subtitle: 'Make celebrations memorable',
             description: 'Custom Cakes Available',
-            image: 'https://images.unsplash.com/photo-1558636508-e0db3814bd1d?w=600&h=400&fit=crop',
+            image: 'https://images.unsplash.com/photo-1535254973040-607b474cb50d?w=600&h=400&fit=crop&q=80',
             bgGradient: gradients[1],
             link: '/category/cake',
             badge: '🎉 SPECIAL',
@@ -48,7 +48,7 @@ const AdsBanner = () => {
             title: 'Crispy Patties',
             subtitle: 'Hot & Fresh from the oven',
             description: 'Starting at just ₹20',
-            image: 'https://images.unsplash.com/photo-1604908176997-125f25cc6f3d?w=600&h=400&fit=crop',
+            image: 'https://images.unsplash.com/photo-1601050690597-df0568f70950?w=600&h=400&fit=crop&q=80',
             bgGradient: gradients[4],
             link: '/category/fastfood',
             badge: '⚡ QUICK',
@@ -59,7 +59,7 @@ const AdsBanner = () => {
             title: 'Beautiful Flowers',
             subtitle: 'Perfect for every occasion',
             description: 'Fresh Bouquets Daily',
-            image: 'https://images.unsplash.com/photo-1487530811176-3780de880c2d?w=600&h=400&fit=crop',
+            image: 'https://images.unsplash.com/photo-1455659817273-f96807779a8a?w=600&h=400&fit=crop&q=80',
             bgGradient: gradients[2],
             link: '/category/flowers',
             badge: '💐 NEW',
@@ -131,63 +131,62 @@ const AdsBanner = () => {
     if (loading) return null; // Or a skeleton
 
     return (
-        <section className="ads-banner-section" aria-label="Special offers carousel">
-            {/* Section Header */}
-            <div className="ads-banner-header">
-                <div className="ads-banner-title">
-                    <span className="fire-icon">🔥</span>
-                    <h2 className="font-script">Special Offers</h2>
-                    <span className="fire-icon">🔥</span>
+        <section className="ads-banner-section max-w-5xl mx-auto my-4 px-3">
+            {/* Section Header - Compact */}
+            <div className="ads-banner-header text-center mb-3">
+                <div className="ads-banner-title flex items-center justify-center gap-2 mb-1">
+                    <span className="fire-icon text-lg">🔥</span>
+                    <h2 className="text-xl md:text-2xl font-bold text-gray-800 m-0">Special Offers</h2>
+                    <span className="fire-icon text-lg">🔥</span>
                 </div>
-                <p className="ads-banner-subtitle">Don't miss out on these amazing deals!</p>
+                <p className="ads-banner-subtitle text-xs md:text-sm text-gray-500 m-0">Don't miss out on these amazing deals!</p>
             </div>
 
-            {/* Main Carousel */}
-            <div className="ads-carousel-wrapper">
+            {/* Main Carousel - Compact */}
+            <div className="ads-carousel-wrapper relative rounded-2xl overflow-hidden shadow-md bg-white" style={{ aspectRatio: '16/9' }}>
                 {/* Navigation Arrows */}
                 {ads.length > 1 && (
                     <>
-                        <button className="carousel-arrow prev" onClick={prevSlide}>
+                        <button className="carousel-arrow prev absolute left-2 top-1/2 -translate-y-1/2 z-20 w-8 h-8 flex items-center justify-center rounded-full bg-white/80 hover:bg-white shadow-sm text-gray-700 transition-all" onClick={prevSlide}>
                             ‹
                         </button>
-                        <button className="carousel-arrow next" onClick={nextSlide}>
+                        <button className="carousel-arrow next absolute right-2 top-1/2 -translate-y-1/2 z-20 w-8 h-8 flex items-center justify-center rounded-full bg-white/80 hover:bg-white shadow-sm text-gray-700 transition-all" onClick={nextSlide}>
                             ›
                         </button>
                     </>
                 )}
 
                 {/* Carousel Container */}
-                <div className="ads-carousel" role="region" aria-live="polite" aria-label="Promotional offers">
+                <div className="ads-carousel h-full w-full">
                     <div
-                        className="ads-carousel-track"
+                        className="ads-carousel-track h-full flex transition-transform duration-500 ease-out"
                         style={{ transform: `translateX(-${currentAd * 100}%)` }}
                     >
                         {ads.map((ad) => (
                             <div
                                 key={ad.id}
-                                className="ad-slide"
+                                className="ad-slide min-w-full h-full relative flex cursor-pointer"
                                 onClick={() => handleAdClick(ad.link)}
                             >
                                 <div
-                                    className="ad-slide-content"
+                                    className="ad-slide-content w-full h-full flex"
                                     style={{ background: ad.bgGradient }}
                                 >
                                     {/* Left Content */}
-                                    <div className="ad-slide-text">
-                                        <div className="ad-slide-badge">{ad.badge}</div>
-                                        <div className="ad-slide-icon">{ad.icon}</div>
-                                        <h3 className="ad-slide-title text-shadow">{ad.title}</h3>
-                                        <p className="ad-slide-subtitle">{ad.subtitle}</p>
-                                        <p className="ad-slide-description bg-white/20 inline-block px-2 py-1 rounded-lg backdrop-blur-sm mt-2">{ad.description}</p>
-                                        <button className="ad-slide-cta mt-3">
-                                            Shop Now <FaArrowRight size={14} />
+                                    <div className="ad-slide-text flex-1 p-4 md:p-8 flex flex-col justify-center items-start z-10">
+                                        <div className="ad-slide-badge bg-white/90 text-[11px] md:text-xs font-bold px-2.5 py-1 rounded-full mb-2 shadow-sm text-orange-600 uppercase tracking-wider">{ad.badge}</div>
+                                        <h3 className="ad-slide-title text-shadow text-white font-bold text-xl md:text-2xl mb-1.5 leading-tight">{ad.title}</h3>
+                                        <p className="ad-slide-subtitle text-white/90 text-sm md:text-base mb-1">{ad.subtitle}</p>
+                                        <p className="ad-slide-description bg-white/20 inline-block px-3 py-1 rounded-full text-[11px] md:text-xs text-white backdrop-blur-sm mt-1">{ad.description}</p>
+                                        <button className="ad-slide-cta mt-3 bg-white text-orange-600 px-4 py-2 rounded-full text-xs md:text-sm font-bold shadow-lg flex items-center gap-1.5 hover:scale-105 active:scale-95 transition-transform">
+                                            Shop Now <FaArrowRight size={10} />
                                         </button>
                                     </div>
 
                                     {/* Right Image */}
-                                    <div className="ad-slide-image">
-                                        <img src={ad.image} alt={ad.title} className="object-cover w-full h-full" />
-                                        <div className="ad-slide-image-overlay"></div>
+                                    <div className="ad-slide-image flex-1 relative overflow-hidden">
+                                        <img src={ad.image} alt={ad.title} className="object-cover w-full h-full absolute inset-0 mask-image-gradient" />
+                                        <div className="ad-slide-image-overlay absolute inset-0 bg-gradient-to-r from-black/10 to-transparent"></div>
                                     </div>
                                 </div>
                             </div>
@@ -197,49 +196,18 @@ const AdsBanner = () => {
 
                 {/* Dots Navigation */}
                 {ads.length > 1 && (
-                    <div className="carousel-dots">
+                    <div className="carousel-dots absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1 z-20">
                         {ads.map((_, index) => (
                             <button
                                 key={index}
-                                onClick={() => goToSlide(index)}
-                                className={`carousel-dot ${currentAd === index ? 'active' : ''}`}
+                                onClick={(e) => { e.stopPropagation(); goToSlide(index); }}
+                                className={`carousel-dot w-1.5 h-1.5 rounded-full transition-all ${currentAd === index ? 'bg-white w-4' : 'bg-white/50 hover:bg-white/80'}`}
                             />
                         ))}
                     </div>
                 )}
             </div>
 
-            {/* Quick Action Buttons */}
-            <div className="ads-action-buttons">
-                <button
-                    className="action-btn"
-                    onClick={() => navigate('/category/cake')}
-                >
-                    <span className="action-icon">🎂</span>
-                    <span>All Cakes</span>
-                </button>
-                <button
-                    className="action-btn"
-                    onClick={() => navigate('/category/fastfood')}
-                >
-                    <span className="action-icon">🍔</span>
-                    <span>Fast Food</span>
-                </button>
-                <button
-                    className="action-btn highlight"
-                    onClick={() => navigate('/category/cake?sub=birthday-cake')}
-                >
-                    <span className="action-icon">🎁</span>
-                    <span>Birthday</span>
-                </button>
-                <button
-                    className="action-btn"
-                    onClick={() => navigate('/category/beverages')}
-                >
-                    <span className="action-icon">☕</span>
-                    <span>Beverages</span>
-                </button>
-            </div>
         </section>
     );
 };

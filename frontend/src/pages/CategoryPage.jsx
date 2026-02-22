@@ -1,107 +1,103 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { FaArrowLeft, FaSearch, FaShoppingCart, FaFire, FaTimes } from 'react-icons/fa';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
+import { FaArrowLeft, FaSearch, FaShoppingCart, FaFire } from 'react-icons/fa';
 import { fetchProducts } from '../services/api';
 import { useCart } from '../context/CartContext';
-import ProductCardCompact from '../components/ProductCardCompact';
-import SideCart from '../components/SideCart';
+import ProductCardNew from '../components/ProductCardNew';
 import Footer from '../components/Footer';
 
-// Category configurations with keywords, theme colors, and subcategories
+// Category configurations with unique color themes and authentic images
 const CATEGORY_CONFIG = {
     fastfood: {
         name: 'Fast Food',
         icon: '🍔',
-        banner: 'https://images.unsplash.com/photo-1561758033-d89a9ad46330?w=800&h=300&fit=crop',
+        banner: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=800&h=400&fit=crop&q=80',
         subcategories: ['All', 'Patties', 'Burger', 'Pizza', 'Sandwich', 'Maggi', 'Momos'],
         keywords: ['fastfood', 'fast food', 'burger', 'pizza', 'patties', 'sandwich', 'momos', 'maggi', 'snacks', 'pattis'],
-        accentBg: 'linear-gradient(180deg, #FFF5EE 0%, #FFEDD5 100%)',
-        accentColor: '#D4700A',
+        theme: { primary: '#E85D04', light: '#F48C06', glow: 'rgba(232, 93, 4, 0.25)', bg: '#FFF4EC' }
     },
     cake: {
         name: 'Cakes',
         icon: '🎂',
-        banner: 'https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=800&h=300&fit=crop',
+        banner: 'https://images.unsplash.com/photo-1621303837174-89787a7d4729?w=800&h=400&fit=crop&q=80',
         subcategories: ['All', 'Birthday', 'Anniversary', 'First Birthday', 'Photo Cake', 'Custom', 'Cupcakes'],
         keywords: ['cake', 'cakes', 'pastry', 'pastries', 'cupcake', 'birthday', 'anniversary', 'chocolate cake', 'vanilla', 'photo cake'],
-        accentBg: 'linear-gradient(180deg, #FFF0F5 0%, #FFE4EC 100%)',
-        accentColor: '#C94070',
+        theme: { primary: '#BE185D', light: '#EC4899', glow: 'rgba(190, 24, 93, 0.25)', bg: '#FFF1F7' }
     },
     beverages: {
         name: 'Beverages',
         icon: '☕',
-        banner: 'https://images.unsplash.com/photo-1461023058943-07fcbe16d735?w=800&h=300&fit=crop',
+        banner: 'https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=800&h=400&fit=crop&q=80',
         subcategories: ['All', 'Cold Coffee', 'Tea', 'Shakes', 'Mocktails', 'Juice'],
         keywords: ['beverages', 'beverage', 'coffee', 'tea', 'shake', 'juice', 'mocktail', 'drink', 'cold coffee', 'milkshake'],
-        accentBg: 'linear-gradient(180deg, #F5F0EA 0%, #EDE5D8 100%)',
-        accentColor: '#6B4226',
+        theme: { primary: '#6B4226', light: '#A0714F', glow: 'rgba(107, 66, 38, 0.25)', bg: '#FBF5F0' }
     },
     bakery: {
         name: 'Bakery',
         icon: '🥐',
-        banner: 'https://images.unsplash.com/photo-1509440159596-0249088772ff?w=800&h=300&fit=crop',
+        banner: 'https://images.unsplash.com/photo-1608198093002-ad4e005484ec?w=800&h=400&fit=crop&q=80',
         subcategories: ['All', 'Bread', 'Cookies', 'Croissants', 'Pastries', 'Biscuits'],
         keywords: ['bakery', 'bread', 'cookies', 'croissant', 'biscuit', 'pastry', 'baked'],
-        accentBg: 'linear-gradient(180deg, #FFF8F0 0%, #FFE8CC 100%)',
-        accentColor: '#B8860B',
+        theme: { primary: '#B45309', light: '#D97706', glow: 'rgba(180, 83, 9, 0.25)', bg: '#FFFBEB' }
     },
     flowers: {
         name: 'Flowers',
         icon: '💐',
-        banner: 'https://images.unsplash.com/photo-1487530811176-3780de880c2d?w=800&h=300&fit=crop',
+        banner: 'https://images.unsplash.com/photo-1455659817273-f96807779a8a?w=800&h=400&fit=crop&q=80',
         subcategories: ['All', 'Bouquets', 'Roses', 'Mixed', 'Premium', 'Gift Combos'],
         keywords: ['flower', 'flowers', 'bouquet', 'rose', 'roses', 'gift', 'floral', 'arrangement'],
-        accentBg: 'linear-gradient(180deg, #F0FFF4 0%, #E8F5E9 100%)',
-        accentColor: '#2E7D32',
+        theme: { primary: '#9D174D', light: '#DB2777', glow: 'rgba(157, 23, 77, 0.25)', bg: '#FFF0F6' }
     },
     patties: {
         name: 'Patties',
         icon: '🥟',
-        banner: 'https://images.unsplash.com/photo-1604908176997-125f25cc6f3d?w=800&h=300&fit=crop',
+        banner: 'https://images.unsplash.com/photo-1601050690597-df0568f70950?w=800&h=400&fit=crop&q=80',
         subcategories: ['All', 'Veg Patties', 'Paneer Patties', 'Aloo Patties', 'Special'],
         keywords: ['patties', 'pattis', 'patty', 'patti', 'samosa', 'snack'],
-        accentBg: 'linear-gradient(180deg, #FFF5EE 0%, #FFEDD5 100%)',
-        accentColor: '#D4700A',
+        theme: { primary: '#C2410C', light: '#EA580C', glow: 'rgba(194, 65, 12, 0.25)', bg: '#FFF7ED' }
     },
     pizza: {
         name: 'Pizza',
         icon: '🍕',
-        banner: 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=800&h=300&fit=crop',
+        banner: 'https://images.unsplash.com/photo-1513104890138-7c749659a591?w=800&h=400&fit=crop&q=80',
         subcategories: ['All', 'Veg Pizza', 'Cheese Pizza', 'Special', 'Mini Pizza'],
-        keywords: ['pizza', 'pizzas', 'cheese pizza', 'veg pizza'],
-        accentBg: 'linear-gradient(180deg, #FFF5EE 0%, #FFEDD5 100%)',
-        accentColor: '#D4700A',
+        keywords: ['pizza', 'pizzas', 'cheese pizza', 'veg pizza', 'fastfood'],
+        theme: { primary: '#DC2626', light: '#EF4444', glow: 'rgba(220, 38, 38, 0.25)', bg: '#FEF2F2' }
     },
     anniversary: {
         name: 'Anniversary',
         icon: '💑',
-        banner: 'https://images.unsplash.com/photo-1530103862676-de3c9da59af7?w=800&h=300&fit=crop',
+        banner: 'https://images.unsplash.com/photo-1535254973040-607b474cb50d?w=800&h=400&fit=crop&q=80',
         subcategories: ['All', 'Cakes', 'Flowers', 'Gift Combos', 'Chocolates', 'Decoration'],
         keywords: ['anniversary', 'wedding', 'couple', 'love', 'romantic', 'heart', 'rose', 'gift'],
-        accentBg: 'linear-gradient(180deg, #FFF0F5 0%, #FFE4EC 100%)',
-        accentColor: '#C94070',
+        theme: { primary: '#7C3AED', light: '#A78BFA', glow: 'rgba(124, 58, 237, 0.25)', bg: '#F5F3FF' }
     }
 };
 
 const CategoryPage = () => {
     const { categoryId } = useParams();
     const navigate = useNavigate();
+    const [searchParams] = useSearchParams();
     const { cart = [] } = useCart();
 
     const [allProducts, setAllProducts] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [activeSubcategory, setActiveSubcategory] = useState('All');
+    const [activeSubcategory, setActiveSubcategory] = useState(() => {
+        const subParam = searchParams.get('sub');
+        return subParam || 'All';
+    });
     const [searchQuery, setSearchQuery] = useState('');
     const [showSearch, setShowSearch] = useState(false);
-    const [showSideCart, setShowSideCart] = useState(false);
 
     const category = CATEGORY_CONFIG[categoryId] || CATEGORY_CONFIG.fastfood;
+    const theme = category.theme || { primary: '#C97B4B', light: '#E8956A', glow: 'rgba(201, 123, 75, 0.25)', bg: '#FDF8F4' };
     const cartCount = cart.reduce((sum, item) => sum + item.quantity, 0);
 
     useEffect(() => {
         const loadProducts = async () => {
             setLoading(true);
             try {
+                // Fetch ALL products and filter client-side
                 const { data } = await fetchProducts();
                 setAllProducts(data || []);
             } catch (error) {
@@ -116,10 +112,13 @@ const CategoryPage = () => {
     }, [categoryId]);
 
     const filteredProducts = useMemo(() => {
+        // First filter by category keywords
         let filtered = allProducts.filter(product => {
             const productCategory = (product.category || '').toLowerCase();
             const productName = (product.name || '').toLowerCase();
             const productDesc = (product.description || '').toLowerCase();
+
+            // Check if product matches any keyword for this category
             return category.keywords.some(keyword =>
                 productCategory.includes(keyword) ||
                 productName.includes(keyword) ||
@@ -127,15 +126,21 @@ const CategoryPage = () => {
             );
         });
 
+        // Filter by subcategory
         if (activeSubcategory !== 'All') {
             const subLower = activeSubcategory.toLowerCase();
-            filtered = filtered.filter(p =>
-                (p.subcategory || '').toLowerCase().includes(subLower) ||
-                (p.name || '').toLowerCase().includes(subLower) ||
-                (p.category || '').toLowerCase().includes(subLower)
-            );
+            filtered = filtered.filter(p => {
+                const hasSub = Array.isArray(p.subcategories) 
+                    ? p.subcategories.some(s => s.toLowerCase().includes(subLower))
+                    : (p.subcategory || '').toLowerCase().includes(subLower);
+                
+                return hasSub || 
+                       (p.name || '').toLowerCase().includes(subLower) ||
+                       (p.category || '').toLowerCase().includes(subLower);
+            });
         }
 
+        // Filter by search
         if (searchQuery.trim()) {
             const query = searchQuery.toLowerCase();
             filtered = filtered.filter(p =>
@@ -147,33 +152,29 @@ const CategoryPage = () => {
         return filtered;
     }, [allProducts, category.keywords, activeSubcategory, searchQuery]);
 
-    const handleItemAdded = () => setShowSideCart(true);
-
     return (
-        <div className="min-h-screen pb-20 animate-page-enter" style={{ background: category.accentBg }}>
-            {/* Header — Warm gradient themed to category */}
-            <header className="sticky top-0 z-20"
+        <div className="min-h-screen pb-24" style={{ background: theme.bg }}>
+            {/* Header - Rounded, Glass Effect */}
+            <header className="sticky top-0 z-20 px-4 py-3"
                 style={{
-                    background: 'var(--bg-card)',
-                    borderBottom: `2px solid ${category.accentColor}20`,
-                    boxShadow: '0 2px 12px rgba(0,0,0,0.06)',
+                    background: `linear-gradient(135deg, ${theme.primary} 0%, ${theme.light} 100%)`,
+                    borderBottomLeftRadius: '24px',
+                    borderBottomRightRadius: '24px',
+                    boxShadow: `0 8px 32px ${theme.glow}`
                 }}>
-                <div className="flex items-center justify-between px-4 py-3">
+                <div className="flex items-center justify-between">
                     {/* Left: Back + Category Name */}
                     <div className="flex items-center gap-3">
                         <button
                             onClick={() => navigate(-1)}
-                            className="w-11 h-11 rounded-xl flex items-center justify-center active:scale-95 transition-transform"
-                            style={{ background: `${category.accentColor}15` }}
-                            aria-label="Go back"
+                            className="w-10 h-10 rounded-full flex items-center justify-center active:scale-95 transition-transform"
+                            style={{ background: 'rgba(255,255,255,0.2)', backdropFilter: 'blur(8px)' }}
                         >
-                            <FaArrowLeft size={16} color={category.accentColor} />
+                            <FaArrowLeft size={16} color="#FFFFFF" />
                         </button>
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate('/menu')}>
                             <span className="text-2xl">{category.icon}</span>
-                            <h1 className="text-lg font-script" style={{ color: 'var(--text-dark)' }}>
-                                {category.name}
-                            </h1>
+                            <h1 className="text-lg font-bold text-white">{category.name}</h1>
                         </div>
                     </div>
 
@@ -181,26 +182,19 @@ const CategoryPage = () => {
                     <div className="flex items-center gap-2">
                         <button
                             onClick={() => setShowSearch(!showSearch)}
-                            className="w-11 h-11 rounded-xl flex items-center justify-center"
-                            style={{ background: `${category.accentColor}15` }}
-                            aria-label="Search"
+                            className="w-10 h-10 rounded-full flex items-center justify-center"
+                            style={{ background: 'rgba(255,255,255,0.2)', backdropFilter: 'blur(8px)' }}
                         >
-                            {showSearch ? (
-                                <FaTimes size={16} color={category.accentColor} />
-                            ) : (
-                                <FaSearch size={16} color={category.accentColor} />
-                            )}
+                            <FaSearch size={14} color="#FFFFFF" />
                         </button>
                         <button
                             onClick={() => navigate('/cart')}
-                            className="w-11 h-11 rounded-xl flex items-center justify-center relative"
-                            style={{ background: `${category.accentColor}15` }}
-                            aria-label="Cart"
+                            className="w-10 h-10 rounded-full flex items-center justify-center relative"
+                            style={{ background: 'rgba(255,255,255,0.25)', backdropFilter: 'blur(8px)' }}
                         >
-                            <FaShoppingCart size={16} color={category.accentColor} />
+                            <FaShoppingCart size={14} color="#FFFFFF" />
                             {cartCount > 0 && (
-                                <span className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full text-white text-xs flex items-center justify-center font-bold"
-                                    style={{ background: category.accentColor }}>
+                                <span className="absolute -top-1 -right-1 w-5 h-5 rounded-full text-white text-[10px] flex items-center justify-center font-bold bg-red-500 shadow-sm">
                                     {cartCount}
                                 </span>
                             )}
@@ -208,20 +202,20 @@ const CategoryPage = () => {
                     </div>
                 </div>
 
-                {/* Search Bar */}
+                {/* Search Bar (expandable) - Pill Shape */}
                 {showSearch && (
-                    <div className="px-4 pb-3 animate-fade-in">
+                    <div className="mt-3 animate-fade-in">
                         <input
                             type="text"
                             placeholder={`Search in ${category.name}...`}
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            className="w-full px-4 py-3 rounded-xl text-base"
+                            className="w-full px-5 py-3 rounded-full text-sm focus:outline-none"
                             style={{
-                                background: 'var(--bg-page)',
-                                border: `1px solid var(--border-light)`,
-                                color: 'var(--text-dark)',
-                                outline: 'none',
+                                background: 'rgba(255,255,255,0.95)',
+                                border: 'none',
+                                color: '#1C1C1C',
+                                boxShadow: '0 4px 16px rgba(0,0,0,0.1)'
                             }}
                             autoFocus
                         />
@@ -229,44 +223,41 @@ const CategoryPage = () => {
                 )}
             </header>
 
-            {/* Category Banner — Overlapping food photo */}
+            {/* Hero Banner - Rounded */}
             <div className="mx-4 mt-4">
-                <div className="relative rounded-2xl overflow-hidden"
-                    style={{ boxShadow: `0 4px 16px ${category.accentColor}25` }}>
+                <div className="relative rounded-3xl overflow-hidden" style={{ boxShadow: `0 8px 24px ${theme.glow}` }}>
                     <img
                         src={category.banner}
                         alt={`${category.name} Banner`}
-                        className="w-full h-40 object-cover"
+                        className="w-full h-40 md:h-48 object-cover"
                     />
-                    <div className="absolute inset-0"
-                        style={{ background: `linear-gradient(90deg, ${category.accentColor}dd 0%, transparent 70%)` }}>
-                        <div className="p-5 h-full flex flex-col justify-center">
-                            <p className="text-xs uppercase tracking-widest text-white/80 font-semibold">Explore</p>
-                            <h2 className="text-2xl font-script text-white mt-1">{category.name}</h2>
-                            <p className="text-sm text-white/80 mt-1">Freshly made daily with love</p>
+                    <div className="absolute inset-0" style={{ background: `linear-gradient(135deg, ${theme.primary}dd 0%, ${theme.light}66 60%, transparent 100%)` }}>
+                        <div className="p-5 h-full flex flex-col justify-end">
+                            <p className="text-[10px] uppercase tracking-[0.2em] text-white/80 font-semibold">Explore</p>
+                            <h2 className="text-2xl font-bold text-white mt-1">{category.name}</h2>
+                            <p className="text-sm text-white/80 mt-1">Freshly made with love ❤️</p>
                         </div>
                     </div>
                 </div>
             </div>
 
-            {/* Subcategory Tabs — Horizontal scroll pills */}
-            <div className="mt-4 px-4">
-                <div className="flex overflow-x-auto pb-3 gap-2 hide-scrollbar snap-x"
-                    style={{ WebkitOverflowScrolling: 'touch' }}>
+            {/* Subcategory Tabs - Pill Chips */}
+            <div className="mt-5 px-4">
+                <div className="flex overflow-x-auto pb-3 gap-2 hide-scrollbar snap-x" style={{ WebkitOverflowScrolling: 'touch' }}>
                     {category.subcategories.map((sub) => (
                         <button
                             key={sub}
                             onClick={() => setActiveSubcategory(sub)}
-                            className="flex-shrink-0 px-5 py-2 rounded-full text-sm font-medium transition-all whitespace-nowrap snap-start"
+                            className="flex-shrink-0 px-5 py-2 rounded-full text-xs font-semibold transition-all whitespace-nowrap snap-start active:scale-95"
                             style={{
                                 background: activeSubcategory === sub
-                                    ? category.accentColor
-                                    : 'var(--bg-card)',
-                                color: activeSubcategory === sub ? 'white' : 'var(--text-brown)',
-                                border: activeSubcategory === sub ? 'none' : '1px solid var(--border-light)',
+                                    ? `linear-gradient(135deg, ${theme.primary} 0%, ${theme.light} 100%)`
+                                    : '#FFFFFF',
+                                color: activeSubcategory === sub ? 'white' : '#666',
+                                border: activeSubcategory === sub ? 'none' : '1.5px solid #E8E3DB',
                                 boxShadow: activeSubcategory === sub
-                                    ? `0 3px 10px ${category.accentColor}40`
-                                    : 'var(--shadow-sm)',
+                                    ? `0 6px 16px ${theme.glow}`
+                                    : '0 2px 8px rgba(0,0,0,0.04)'
                             }}
                         >
                             {sub}
@@ -275,78 +266,51 @@ const CategoryPage = () => {
                 </div>
             </div>
 
-            {/* Product List — Zomato-style compact cards */}
+            {/* Products Grid */}
             <div className="px-4 mt-2">
                 {loading ? (
-                    <div className="flex flex-col gap-3">
+                    <div className="grid grid-cols-2 gap-3">
                         {[...Array(6)].map((_, i) => (
-                            <div key={i} className="flex items-center gap-4 p-4 rounded-2xl"
-                                style={{ background: 'var(--bg-card)', border: '1px solid var(--border-light)' }}>
-                                <div className="w-[90px] h-[90px] rounded-xl skeleton-shine"
-                                    style={{ background: '#E8E3DB' }} />
-                                <div className="flex-1">
-                                    <div className="h-4 w-3/4 rounded skeleton-shine mb-2.5"
-                                        style={{ background: '#E8E3DB' }} />
-                                    <div className="h-3 w-1/2 rounded skeleton-shine mb-2.5"
-                                        style={{ background: '#E8E3DB' }} />
-                                    <div className="h-3 w-full rounded skeleton-shine"
-                                        style={{ background: '#E8E3DB' }} />
-                                </div>
-                            </div>
+                            <div key={i} className="rounded-3xl h-64 animate-pulse" style={{ background: '#E8E3DB' }} />
                         ))}
                     </div>
                 ) : filteredProducts.length > 0 ? (
                     <>
                         {/* Results count */}
-                        <div className="flex items-center gap-2 mb-4">
-                            <FaFire size={14} color={category.accentColor} />
-                            <span className="text-sm font-medium" style={{ color: 'var(--text-muted)' }}>
+                        <div className="flex items-center gap-2 mb-3 px-1">
+                            <FaFire size={12} color="#C97B4B" />
+                            <span className="text-xs font-medium text-gray-500">
                                 {filteredProducts.length} items found
                             </span>
                         </div>
 
-                        {/* Compact Card List — Single column */}
-                        <div className="flex flex-col gap-2.5">
+                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 md:gap-4">
                             {filteredProducts.map((product, idx) => (
-                                <div key={product._id} className="animate-fade-in-up"
-                                    style={{ animationDelay: `${idx * 0.04}s` }}>
-                                    <ProductCardCompact
-                                        product={product}
-                                        onAddSuccess={handleItemAdded}
-                                    />
+                                <div key={product._id} className="animate-fade-in-up" style={{ animationDelay: `${idx * 0.05}s` }}>
+                                    <ProductCardNew product={product} />
                                 </div>
                             ))}
                         </div>
                     </>
                 ) : (
                     <div className="text-center py-16">
-                        <span className="text-6xl mb-4 block">{category.icon}</span>
-                        <h3 className="text-lg font-script" style={{ color: 'var(--text-dark)' }}>
-                            No items found
-                        </h3>
-                        <p className="text-sm mt-2" style={{ color: 'var(--text-muted)' }}>
+                        <div className="w-20 h-20 mx-auto rounded-full bg-orange-50 flex items-center justify-center mb-4">
+                            <span className="text-4xl">🔍</span>
+                        </div>
+                        <h3 className="text-lg font-bold text-gray-800">No items found</h3>
+                        <p className="text-sm mt-2 text-gray-500">
                             No products available in this category yet
                         </p>
                         <button
                             onClick={() => navigate('/menu')}
-                            className="mt-5 px-6 py-3 rounded-xl text-white text-base font-medium"
-                            style={{
-                                background: `linear-gradient(135deg, ${category.accentColor}, ${category.accentColor}cc)`,
-                                boxShadow: `0 4px 12px ${category.accentColor}30`,
-                                minHeight: '48px',
-                            }}
+                            className="mt-5 px-8 py-3 rounded-full text-white font-semibold active:scale-95 transition-transform"
+                            style={{ background: `linear-gradient(135deg, ${theme.primary} 0%, ${theme.light} 100%)`, boxShadow: `0 8px 24px ${theme.glow}` }}
                         >
-                            Browse All Categories
+                            Browse All Items
                         </button>
                     </div>
                 )}
             </div>
-
-            {/* Side Cart */}
-            <SideCart
-                isOpen={showSideCart}
-                onClose={() => setShowSideCart(false)}
-            />
 
             <Footer />
         </div>

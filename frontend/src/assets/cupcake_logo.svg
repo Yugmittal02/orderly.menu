@@ -1,0 +1,23 @@
+<svg width="200" height="200" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Wrapper Base -->
+  <path d="M50 120 L60 180 H140 L150 120" fill="#8B4513" stroke="#4A2C1A" stroke-width="3"/>
+  <!-- Wrapper Ribs -->
+  <path d="M75 120 L80 180" stroke="#4A2C1A" stroke-width="2"/>
+  <path d="M100 120 L100 180" stroke="#4A2C1A" stroke-width="2"/>
+  <path d="M125 120 L120 180" stroke="#4A2C1A" stroke-width="2"/>
+  
+  <!-- Frosting -->
+  <path d="M45 120 C45 90 70 80 70 70 C70 50 90 40 100 40 C110 40 130 50 130 70 C130 80 155 90 155 120 Z" fill="#FC8019" stroke="#E57312" stroke-width="3"/>
+  <path d="M70 70 C80 80 90 85 100 85 C110 85 120 80 130 70" stroke="#E57312" stroke-width="2" fill="none"/>
+  
+  <!-- Cherry -->
+  <circle cx="100" cy="40" r="12" fill="#E53935" stroke="#B71C1C" stroke-width="2"/>
+  <path d="M100 28 Q110 10 120 15" stroke="#2E7D32" stroke-width="3" fill="none"/>
+  
+  <!-- Sprinkles -->
+  <rect x="70" y="90" width="4" height="8" rx="2" fill="#FFF" transform="rotate(-15 70 90)"/>
+  <rect x="90" y="60" width="4" height="8" rx="2" fill="#FFF" transform="rotate(10 90 60)"/>
+  <rect x="120" y="80" width="4" height="8" rx="2" fill="#FFF" transform="rotate(30 120 80)"/>
+  <rect x="110" y="100" width="4" height="8" rx="2" fill="#FFF" transform="rotate(-45 110 100)"/>
+  <rect x="80" y="110" width="4" height="8" rx="2" fill="#FFF" transform="rotate(20 80 110)"/>
+</svg>

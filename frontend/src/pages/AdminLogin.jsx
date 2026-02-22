@@ -1,15 +1,22 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { FaLock, FaEnvelope, FaSignInAlt, FaUtensils } from 'react-icons/fa';
+import { FaLock, FaEnvelope, FaArrowRight, FaArrowLeft } from 'react-icons/fa';
 
 const AdminLogin = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
-    const { adminLogin } = useAuth();
+    const { adminLogin, isAdmin } = useAuth();
     const navigate = useNavigate();
+
+    // Redirect if already logged in as admin
+    useEffect(() => {
+        if (isAdmin) {
+            navigate('/admin/dashboard', { replace: true });
+        }
+    }, [isAdmin, navigate]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -27,73 +34,84 @@ const AdminLogin = () => {
     };
 
     return (
-        <div className="min-h-screen bg-orange-50 flex items-center justify-center p-6 relative overflow-hidden">
-            {/* Background Pattern - Food Icons */}
-            <div className="absolute inset-0 opacity-[0.03] pointer-events-none overflow-hidden">
-                <div className="grid grid-cols-6 gap-12 rotate-12 scale-110">
-                    {[...Array(48)].map((_, i) => (
-                        <div key={i} className="text-6xl text-orange-900 transform hover:scale-110 transition-transform duration-700">
-                           {['🍔', '🍕', '🍰', '🥐', '☕', '🥤', '🧁', '🍪', '🥪', '🥨', '🥯', '🥞'][i % 12]}
-                        </div>
-                    ))}
-                </div>
-            </div>
+        <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden" style={{ background: '#FAF7F2' }}>
 
-            {/* Glowing Orbs */}
-            <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
-                 <div className="absolute top-[-10%] left-[-10%] w-[40rem] h-[40rem] bg-orange-200/40 rounded-full blur-[100px]"></div>
-                 <div className="absolute bottom-[-10%] right-[-10%] w-[40rem] h-[40rem] bg-amber-200/40 rounded-full blur-[100px]"></div>
+            {/* Back Button */}
+            <button
+                onClick={() => navigate('/')}
+                className="absolute top-6 left-6 z-20 w-11 h-11 rounded-full flex items-center justify-center active:scale-95 transition-all shadow-lg"
+                style={{ background: '#FFFFFF', border: '2px solid #E8E3DB' }}
+                aria-label="Go back"
+            >
+                <FaArrowLeft size={16} style={{ color: '#C97B4B' }} />
+            </button>
+
+            {/* Background Blurs */}
+            <div className="absolute inset-0 z-0">
+                <div className="absolute top-0 right-0 w-[500px] h-[500px] opacity-[0.08] rounded-full blur-[100px]"
+                    style={{ background: '#C97B4B' }}></div>
+                <div className="absolute bottom-0 left-0 w-[500px] h-[500px] opacity-[0.08] rounded-full blur-[100px]"
+                    style={{ background: '#E8956A' }}></div>
             </div>
 
             {/* Login Card */}
             <div className="relative z-10 w-full max-w-sm">
                 
-                {/* Logo Section */}
-                <div className="text-center mb-8 relative">
-                    <div className="w-24 h-24 bg-white rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-2xl shadow-orange-100 rotate-3 hover:rotate-0 transition-all duration-500 border-4 border-orange-50">
-                        <FaUtensils className="text-4xl text-orange-500" />
+                {/* Logo */}
+                <div className="text-center mb-8">
+                    <div className="w-20 h-20 rounded-2xl flex items-center justify-center mx-auto mb-4"
+                        style={{ background: 'linear-gradient(135deg, #C97B4B 0%, #E8956A 100%)', boxShadow: '0 8px 32px rgba(201, 123, 75, 0.3)' }}>
+                        <FaLock className="text-3xl text-white" />
                     </div>
-                    <h1 className="text-3xl font-black text-gray-800 tracking-tight">
-                        Shubham<span className="text-orange-500">Pattis</span>
+                    <h1 className="text-2xl font-black" style={{ color: '#1C1C1C' }}>
+                        Admin <span style={{ color: '#C97B4B' }}>Portal</span>
                     </h1>
-                    <p className="text-gray-400 font-medium">ShubhamPattis</p>
+                    <p className="text-sm mt-1" style={{ color: '#A0998F' }}>Sewa Shubham Bakery</p>
                 </div>
 
-                {/* Form Card */}
-                <div className="bg-white/80 backdrop-blur-xl rounded-[2rem] p-8 shadow-[0_20px_60px_-15px_rgba(255,100,0,0.1)] border border-white/60">
+                {/* Form */}
+                <div className="rounded-3xl p-8"
+                    style={{ background: '#FFFFFF', border: '2px solid #E8E3DB', boxShadow: '0 8px 32px rgba(0,0,0,0.06)' }}>
                     
                     {error && (
-                        <div className="bg-red-50 text-red-500 px-4 py-3 rounded-xl mb-6 text-sm text-center font-bold border border-red-100 flex items-center justify-center gap-2">
-                            <span className="w-1.5 h-1.5 bg-red-500 rounded-full"></span>
+                        <div className="px-4 py-3 rounded-xl mb-6 text-sm text-center font-bold flex items-center justify-center gap-2"
+                            style={{ background: '#FEE2E2', color: '#DC2626', border: '1px solid #FECACA' }}>
+                            <span className="w-1.5 h-1.5 rounded-full" style={{ background: '#DC2626' }}></span>
                             {error}
                         </div>
                     )}
 
                     <form onSubmit={handleSubmit} className="space-y-5">
                         <div className="space-y-1.5">
-                            <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Email</label>
+                            <label className="text-xs font-bold uppercase tracking-wider ml-1" style={{ color: '#8B7355' }}>Email</label>
                             <div className="relative group">
-                                <FaEnvelope className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300 group-focus-within:text-orange-500 transition-colors" />
+                                <FaEnvelope className="absolute left-4 top-1/2 -translate-y-1/2 transition-colors" style={{ color: '#A0998F' }} />
                                 <input 
                                     type="email"
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
-                                    className="w-full bg-orange-50/50 border-2 border-orange-50 rounded-xl pl-11 pr-4 py-3.5 text-gray-800 font-medium focus:bg-white focus:outline-none focus:border-orange-300 transition-all placeholder:text-gray-300"
-                                    placeholder="admin@shubhampattis.com"
+                                    className="w-full rounded-xl pl-11 pr-4 py-3.5 font-medium outline-none transition-all"
+                                    style={{ background: '#FAF7F2', border: '2px solid #E8E3DB', color: '#1C1C1C' }}
+                                    onFocus={(e) => e.target.style.borderColor = '#C97B4B'}
+                                    onBlur={(e) => e.target.style.borderColor = '#E8E3DB'}
+                                    placeholder="admin@bakery.com"
                                     required
                                 />
                             </div>
                         </div>
 
                         <div className="space-y-1.5">
-                            <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Password</label>
+                            <label className="text-xs font-bold uppercase tracking-wider ml-1" style={{ color: '#8B7355' }}>Password</label>
                             <div className="relative group">
-                                <FaLock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300 group-focus-within:text-orange-500 transition-colors" />
+                                <FaLock className="absolute left-4 top-1/2 -translate-y-1/2 transition-colors" style={{ color: '#A0998F' }} />
                                 <input 
                                     type="password"
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
-                                    className="w-full bg-orange-50/50 border-2 border-orange-50 rounded-xl pl-11 pr-4 py-3.5 text-gray-800 font-medium focus:bg-white focus:outline-none focus:border-orange-300 transition-all placeholder:text-gray-300"
+                                    className="w-full rounded-xl pl-11 pr-4 py-3.5 font-medium outline-none transition-all"
+                                    style={{ background: '#FAF7F2', border: '2px solid #E8E3DB', color: '#1C1C1C' }}
+                                    onFocus={(e) => e.target.style.borderColor = '#C97B4B'}
+                                    onBlur={(e) => e.target.style.borderColor = '#E8E3DB'}
                                     placeholder="••••••••"
                                     required
                                 />
@@ -103,26 +121,28 @@ const AdminLogin = () => {
                         <button 
                             type="submit"
                             disabled={loading}
-                            className="w-full bg-gradient-to-r from-orange-500 to-amber-500 text-white font-bold py-4 rounded-xl shadow-lg shadow-orange-200 hover:shadow-orange-300 hover:-translate-y-0.5 transition-all active:scale-[0.98] active:translate-y-0 flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed mt-4"
+                            className="w-full text-white font-bold py-4 rounded-xl flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed mt-4 active:scale-[0.98] transition-all group"
+                            style={{ background: 'linear-gradient(135deg, #C97B4B 0%, #E8956A 100%)', boxShadow: '0 8px 24px rgba(201, 123, 75, 0.3)' }}
                         >
                             {loading ? (
-                                <FaUtensils className="animate-spin" />
+                                <div className="w-6 h-6 border-3 border-white border-t-transparent rounded-full animate-spin"></div>
                             ) : (
                                 <>
-                                    <span>Safe Entry</span>
-                                    <FaSignInAlt />
+                                    <span>Sign In</span>
+                                    <FaArrowRight className="group-hover:translate-x-1 transition-transform" />
                                 </>
                             )}
                         </button>
                     </form>
                 </div>
 
-                <div className="text-center mt-8">
-                     <button 
+                <div className="text-center mt-6">
+                    <button 
                         onClick={() => navigate('/')}
-                        className="text-gray-400 hover:text-orange-500 transition-colors text-sm font-semibold"
+                        className="text-sm font-semibold transition-colors"
+                        style={{ color: '#A0998F' }}
                     >
-                        Return to Shop
+                        ← Return to Shop
                     </button>
                 </div>
             </div>

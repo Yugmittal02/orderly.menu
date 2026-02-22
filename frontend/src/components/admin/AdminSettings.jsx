@@ -1,160 +1,77 @@
 import React from 'react';
-import { FaQrcode, FaStore, FaTruck, FaLock } from 'react-icons/fa';
+import { FaStore, FaToggleOn, FaToggleOff, FaLock } from 'react-icons/fa';
 
 const AdminSettings = ({
-    settingsForm,
-    setSettingsForm,
     storeSettings,
     setStoreSettings,
-    feeSettings,
-    setFeeSettings,
-    onUpdateUPI,
     onUpdateStore,
-    onUpdateFees,
-    setShowMapPicker
 }) => {
     return (
-        <div className="px-4 pb-20 pt-4 space-y-6">
-            <h2 className="text-2xl font-black text-gray-800 mb-6 sticky top-0 bg-gray-50 z-30 pb-4">Settings</h2>
+        <div className="px-4 pb-24 pt-4 space-y-5">
+            <h2 className="text-2xl font-black" style={{ color: '#1C1C1C' }}>Settings</h2>
 
-            {/* UPI Settings */}
-            <div className="bg-white p-5 rounded-3xl shadow-sm border border-gray-100">
+            {/* Store Status */}
+            <div className="p-5 rounded-2xl"
+                style={{ background: '#FFFFFF', border: '2px solid #E8E3DB', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
                 <div className="flex items-center gap-3 mb-4">
-                    <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center text-blue-600">
-                        <FaQrcode />
-                    </div>
-                    <h3 className="font-bold text-gray-800">UPI Payments</h3>
-                </div>
-                <div className="space-y-3">
-                    <div>
-                        <label className="text-xs text-gray-500 font-bold ml-1 mb-1 block">UPI ID</label>
-                        <input
-                            type="text"
-                            value={settingsForm.upiId}
-                            onChange={(e) => setSettingsForm({ ...settingsForm, upiId: e.target.value })}
-                            className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm"
-                            placeholder="e.g. business@upi"
-                        />
-                    </div>
-                    <div>
-                        <label className="text-xs text-gray-500 font-bold ml-1 mb-1 block">Payee Name</label>
-                        <input
-                            type="text"
-                            value={settingsForm.payeeName}
-                            onChange={(e) => setSettingsForm({ ...settingsForm, payeeName: e.target.value })}
-                            className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm"
-                            placeholder="Business Name"
-                        />
-                    </div>
-                    <button
-                        onClick={onUpdateUPI}
-                        className="w-full py-3 bg-blue-500 text-white font-bold rounded-xl shadow-lg shadow-blue-200 active:scale-[0.98]"
-                    >
-                        Update UPI Details
-                    </button>
-                </div>
-            </div>
-
-            {/* Store Settings */}
-            <div className="bg-white p-5 rounded-3xl shadow-sm border border-gray-100">
-                <div className="flex items-center gap-3 mb-4">
-                    <div className="w-10 h-10 bg-purple-100 rounded-xl flex items-center justify-center text-purple-600">
+                    <div className="w-10 h-10 rounded-xl flex items-center justify-center"
+                        style={{ background: '#FEF3E2', color: '#C97B4B' }}>
                         <FaStore />
                     </div>
-                    <h3 className="font-bold text-gray-800">Store Details</h3>
+                    <div className="flex-1">
+                        <h3 className="font-bold" style={{ color: '#1C1C1C' }}>Store Status</h3>
+                        <p className="text-xs" style={{ color: '#A0998F' }}>Control whether customers can place orders</p>
+                    </div>
                 </div>
-                <div className="space-y-3">
-                    <div className="flex gap-2">
-                        <div className="flex-1">
-                            <label className="text-xs text-gray-500 font-bold ml-1 mb-1 block">Store Status</label>
-                            <select
-                                value={storeSettings.isOpen ? "open" : "closed"}
-                                onChange={(e) => setStoreSettings({ ...storeSettings, isOpen: e.target.value === "open" })}
-                                className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm"
-                            >
-                                <option value="open">Open</option>
-                                <option value="closed">Closed</option>
-                            </select>
-                        </div>
+                <div className="flex items-center justify-between p-4 rounded-xl mb-4"
+                    style={{ background: '#FAF7F2', border: '1px solid #E8E3DB' }}>
+                    <div className="flex items-center gap-3">
+                        <div className="w-3 h-3 rounded-full" style={{ background: storeSettings.isOpen ? '#16A34A' : '#DC2626' }}></div>
+                        <span className="font-bold" style={{ color: storeSettings.isOpen ? '#16A34A' : '#DC2626' }}>
+                            {storeSettings.isOpen ? 'Store is Open' : 'Store is Closed'}
+                        </span>
                     </div>
                     <button
-                        onClick={() => setShowMapPicker(true)}
-                        className="w-full py-3 border-2 border-purple-100 text-purple-600 font-bold rounded-xl hover:bg-purple-50"
+                        onClick={() => setStoreSettings({ ...storeSettings, isOpen: !storeSettings.isOpen })}
+                        className="text-3xl transition-transform active:scale-90"
+                        style={{ color: storeSettings.isOpen ? '#16A34A' : '#A0998F' }}
                     >
-                        📍 Set Store Location
+                        {storeSettings.isOpen ? <FaToggleOn /> : <FaToggleOff />}
                     </button>
-                    <button
-                        onClick={onUpdateStore}
-                        className="w-full py-3 bg-purple-500 text-white font-bold rounded-xl shadow-lg shadow-purple-200 active:scale-[0.98]"
-                    >
-                        Save Store Settings
-                    </button>
-                </div>
-            </div>
-
-            {/* Delivery Fees */}
-            <div className="bg-white p-5 rounded-3xl shadow-sm border border-gray-100">
-                <div className="flex items-center gap-3 mb-4">
-                    <div className="w-10 h-10 bg-green-100 rounded-xl flex items-center justify-center text-green-600">
-                        <FaTruck />
-                    </div>
-                    <h3 className="font-bold text-gray-800">Delivery Fees</h3>
-                </div>
-                <div className="grid grid-cols-2 gap-3 mb-3">
-                    <div>
-                        <label className="text-xs text-gray-500 font-bold ml-1 mb-1 block">Base Fee (₹)</label>
-                        <input
-                            type="number"
-                            value={feeSettings.baseFee}
-                            onChange={(e) => setFeeSettings({ ...feeSettings, baseFee: e.target.value })}
-                            className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm"
-                        />
-                    </div>
-                    <div>
-                        <label className="text-xs text-gray-500 font-bold ml-1 mb-1 block">Per km (₹)</label>
-                        <input
-                            type="number"
-                            value={feeSettings.perKmFee}
-                            onChange={(e) => setFeeSettings({ ...feeSettings, perKmFee: e.target.value })}
-                            className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm"
-                        />
-                    </div>
-                    <div>
-                        <label className="text-xs text-gray-500 font-bold ml-1 mb-1 block">Free Above (₹)</label>
-                        <input
-                            type="number"
-                            value={feeSettings.freeDeliveryThreshold}
-                            onChange={(e) => setFeeSettings({ ...feeSettings, freeDeliveryThreshold: e.target.value })}
-                            className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm"
-                        />
-                    </div>
-                    <div>
-                        <label className="text-xs text-gray-500 font-bold ml-1 mb-1 block">Max Dist (km)</label>
-                        <input
-                            type="number"
-                            value={feeSettings.maxDeliveryDistance}
-                            onChange={(e) => setFeeSettings({ ...feeSettings, maxDeliveryDistance: e.target.value })}
-                            className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm"
-                        />
-                    </div>
                 </div>
                 <button
-                    onClick={onUpdateFees}
-                    className="w-full py-3 bg-green-500 text-white font-bold rounded-xl shadow-lg shadow-green-200 active:scale-[0.98]"
+                    onClick={onUpdateStore}
+                    className="w-full py-3 text-white font-bold rounded-xl active:scale-[0.98]"
+                    style={{ background: 'linear-gradient(135deg, #C97B4B 0%, #E8956A 100%)', boxShadow: '0 4px 12px rgba(201, 123, 75, 0.3)' }}
                 >
-                    Update Fee Rules
+                    Save Settings
                 </button>
             </div>
 
-            {/* Password Reset Section (Placeholder for Security) */}
-            <div className="bg-white p-5 rounded-3xl shadow-sm border border-gray-100 opacity-50">
-                <div className="flex items-center gap-3">
-                    <FaLock className="text-gray-400" />
-                    <h3 className="font-bold text-gray-500">Admin Password</h3>
+            {/* Delivery Info */}
+            <div className="p-5 rounded-2xl"
+                style={{ background: '#FFFFFF', border: '2px solid #E8E3DB', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
+                <div className="flex items-center gap-3 mb-3">
+                    <span className="text-xl">🚚</span>
+                    <h3 className="font-bold" style={{ color: '#1C1C1C' }}>Delivery Policy</h3>
                 </div>
-                <p className="text-xs text-gray-400 mt-1">Change password functionality coming soon.</p>
+                <div className="p-4 rounded-xl" style={{ background: '#FEF3E2', border: '1px solid #E8E3DB' }}>
+                    <p className="text-sm font-semibold" style={{ color: '#C97B4B' }}>₹30 flat delivery fee</p>
+                    <p className="text-xs mt-1" style={{ color: '#8B7355' }}>We only serve in Bharatpur city. A flat ₹30 delivery charge is automatically applied to all delivery orders.</p>
+                </div>
             </div>
 
+            {/* Admin Password */}
+            <div className="p-5 rounded-2xl opacity-50"
+                style={{ background: '#FFFFFF', border: '2px solid #E8E3DB' }}>
+                <div className="flex items-center gap-3">
+                    <FaLock style={{ color: '#A0998F' }} />
+                    <div>
+                        <h3 className="font-bold" style={{ color: '#7E7E7E' }}>Admin Password</h3>
+                        <p className="text-xs" style={{ color: '#A0998F' }}>Change password — coming soon</p>
+                    </div>
+                </div>
+            </div>
         </div>
     );
 };

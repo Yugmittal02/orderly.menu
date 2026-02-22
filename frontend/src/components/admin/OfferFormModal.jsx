@@ -1,19 +1,24 @@
 import React, { useState } from 'react';
-import { createOffer } from '../../services/api';
+import { createOffer, updateOffer } from '../../services/api';
 
-const OfferFormModal = ({ onClose, onSave }) => {
+const OfferFormModal = ({ offer, onClose, onSave }) => {
+    const isEditing = !!offer;
     const [form, setForm] = useState({
-        title: "",
-        description: "",
-        discountType: "percentage",
-        discountValue: "",
-        code: "",
-        validTo: "",
-        minOrderValue: 0,
-        isActive: true,
-        image: "",
+        title: offer?.title || "",
+        description: offer?.description || "",
+        discountType: offer?.discountType || "percentage",
+        discountValue: offer?.discountValue || "",
+        maxDiscount: offer?.maxDiscount || "",
+        code: offer?.code || "",
+        validFrom: offer?.validFrom ? new Date(offer.validFrom).toISOString().split('T')[0] : "",
+        validTo: offer?.validTo ? new Date(offer.validTo).toISOString().split('T')[0] : "",
+        minOrderValue: offer?.minOrderValue || 0,
+        maxUsageCount: offer?.maxUsageCount || "",
+        isActive: offer?.isActive !== undefined ? offer.isActive : true,
+        image: offer?.image || "",
     });
     const [uploading, setUploading] = useState(false);
+    const [saving, setSaving] = useState(false);
 
     const handleImageUpload = async (e) => {
         const file = e.target.files[0];
@@ -38,11 +43,25 @@ const OfferFormModal = ({ onClose, onSave }) => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        setSaving(true);
         try {
-            await createOffer(form);
+            const payload = {
+                ...form,
+                discountValue: Number(form.discountValue),
+                minOrderValue: Number(form.minOrderValue) || 0,
+                maxDiscount: form.maxDiscount ? Number(form.maxDiscount) : null,
+                maxUsageCount: form.maxUsageCount ? Number(form.maxUsageCount) : null,
+            };
+            if (isEditing) {
+                await updateOffer(offer._id, payload);
+            } else {
+                await createOffer(payload);
+            }
             onSave();
         } catch (err) {
-            alert("Error creating offer");
+            alert(isEditing ? "Error updating offer" : "Error creating offer");
+        } finally {
+            setSaving(false);
         }
     };
 
@@ -50,7 +69,7 @@ const OfferFormModal = ({ onClose, onSave }) => {
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-end justify-center">
             <div className="bg-white w-full rounded-t-3xl shadow-2xl animate-slide-up max-h-[90vh] overflow-y-auto">
                 <div className="p-5 border-b border-gray-100 flex justify-between items-center sticky top-0 bg-white z-10">
-                    <h3 className="text-xl font-bold text-gray-800">Create Offer</h3>
+                    <h3 className="text-xl font-bold text-gray-800">{isEditing ? 'Edit Offer' : 'Create Offer'}</h3>
                     <button onClick={onClose} className="text-gray-400 text-2xl">
                         &times;
                     </button>
@@ -125,6 +144,7 @@ const OfferFormModal = ({ onClose, onSave }) => {
                         )}
                     </div>
 
+                    {/* Discount Type + Value */}
                     <div className="grid grid-cols-2 gap-3">
                         <select
                             value={form.discountType}
@@ -146,6 +166,20 @@ const OfferFormModal = ({ onClose, onSave }) => {
                         />
                     </div>
 
+                    {/* Max Discount Cap (only for percentage) */}
+                    {form.discountType === 'percentage' && (
+                        <div>
+                            <label className="text-xs text-gray-500 ml-1 mb-1 block">Max Discount Cap (₹)</label>
+                            <input
+                                type="number"
+                                placeholder="e.g. 200 (leave empty for no cap)"
+                                value={form.maxDiscount}
+                                onChange={(e) => setForm({ ...form, maxDiscount: e.target.value })}
+                                className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3.5 text-base"
+                            />
+                        </div>
+                    )}
+
                     <input
                         type="text"
                         placeholder="Coupon Code (e.g. SAVE20)"
@@ -159,6 +193,15 @@ const OfferFormModal = ({ onClose, onSave }) => {
 
                     <div className="grid grid-cols-2 gap-3">
                         <div>
+                            <label className="text-xs text-gray-500 ml-1 mb-1 block">Valid From</label>
+                            <input
+                                type="date"
+                                value={form.validFrom}
+                                onChange={(e) => setForm({ ...form, validFrom: e.target.value })}
+                                className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3.5 text-base"
+                            />
+                        </div>
+                        <div>
                             <label className="text-xs text-gray-500 ml-1 mb-1 block">Valid Until</label>
                             <input
                                 type="date"
@@ -167,8 +210,11 @@ const OfferFormModal = ({ onClose, onSave }) => {
                                 className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3.5 text-base"
                             />
                         </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3">
                         <div>
-                            <label className="text-xs text-gray-500 ml-1 mb-1 block">Min Order</label>
+                            <label className="text-xs text-gray-500 ml-1 mb-1 block">Min Order (₹)</label>
                             <input
                                 type="number"
                                 placeholder="Min Order"
@@ -177,6 +223,28 @@ const OfferFormModal = ({ onClose, onSave }) => {
                                 className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3.5 text-base"
                             />
                         </div>
+                        <div>
+                            <label className="text-xs text-gray-500 ml-1 mb-1 block">Usage Limit</label>
+                            <input
+                                type="number"
+                                placeholder="Unlimited"
+                                value={form.maxUsageCount}
+                                onChange={(e) => setForm({ ...form, maxUsageCount: e.target.value })}
+                                className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3.5 text-base"
+                            />
+                        </div>
+                    </div>
+
+                    {/* Active Toggle */}
+                    <div className="flex items-center justify-between bg-gray-50 rounded-xl p-3.5 border border-gray-200">
+                        <span className="text-sm font-bold text-gray-700">Active</span>
+                        <button
+                            type="button"
+                            onClick={() => setForm({ ...form, isActive: !form.isActive })}
+                            className={`relative w-12 h-7 rounded-full transition-colors ${form.isActive ? 'bg-green-500' : 'bg-gray-300'}`}
+                        >
+                            <div className={`absolute top-0.5 w-6 h-6 bg-white rounded-full shadow transition-transform ${form.isActive ? 'translate-x-5' : 'translate-x-0.5'}`}></div>
+                        </button>
                     </div>
 
                     <div className="flex gap-3 pt-2">
@@ -189,9 +257,10 @@ const OfferFormModal = ({ onClose, onSave }) => {
                         </button>
                         <button
                             type="submit"
-                            className="flex-1 py-4 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-xl font-bold shadow-lg shadow-orange-200"
+                            disabled={saving}
+                            className="flex-1 py-4 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-xl font-bold shadow-lg shadow-orange-200 disabled:opacity-50"
                         >
-                            Create Offer
+                            {saving ? 'Saving...' : isEditing ? 'Update Offer' : 'Create Offer'}
                         </button>
                     </div>
                 </form>

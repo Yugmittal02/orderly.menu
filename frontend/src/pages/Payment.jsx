@@ -8,6 +8,7 @@ import {
   getFeeSettings,
   calculateDeliveryFee,
   getPaymentStatus,
+  logUserActivity,
 } from "../services/api";
 import {
   FaArrowLeft,
@@ -49,14 +50,8 @@ const Payment = () => {
   const [isRedirecting, setIsRedirecting] = useState(false); // Show loader while redirecting
   const isProcessingRef = useRef(false); // Ref for immediate check
 
-  // Fee states
-  const [feeSettings, setFeeSettings] = useState({
-    deliveryFeeBase: 30,
-    deliveryFeePerKm: 5,
-    freeDeliveryThreshold: 500,
-  });
-  const [deliveryFee, setDeliveryFee] = useState(0);
-  const [freeDelivery, setFreeDelivery] = useState(false);
+  // Delivery — flat ₹30
+  const deliveryFee = orderType === "Delivery" ? 30 : 0;
 
   // Offer states
   const [selectedOffer, setSelectedOffer] = useState(null);
@@ -68,7 +63,7 @@ const Payment = () => {
 
   // Calculations - No tax, no platform fee
   const subtotal = Number(total) || 0;
-  const grandTotal = Math.max(0, subtotal + (Number(deliveryFee) || 0) - (Number(discount) || 0));
+  const grandTotal = Math.max(0, subtotal + deliveryFee - (Number(discount) || 0));
 
   // Check for pending payment on page load (for UPI app return)
   useEffect(() => {
@@ -174,12 +169,7 @@ const Payment = () => {
     }
   }, []);
 
-  // Calculate delivery fee when delivery address is set
-  useEffect(() => {
-    if (orderType === "Delivery" && deliveryAddress?.coordinates) {
-      calculateDelivery();
-    }
-  }, [orderType, deliveryAddress, subtotal]);
+
 
   // Redirect if no cart or order type (but not during order processing)
   useEffect(() => {
@@ -318,6 +308,16 @@ const Payment = () => {
 
       const response = await createOrder(orderData);
 
+      // Log activity
+      try {
+        await logUserActivity({
+          type: 'order_placed',
+          description: `Order placed — ${orderType} — ${paymentMethod}`,
+          orderId: response.data._id,
+          amount: grandTotal,
+        });
+      } catch (e) { /* activity log is non-critical */ }
+
       // Set both ref (immediate) and state to prevent redirect race condition
       isProcessingRef.current = true;
       setIsProcessingOrder(true);
@@ -448,22 +448,22 @@ const Payment = () => {
           <button
             onClick={() => navigate(-1)}
             className="w-12 h-12 rounded-2xl flex items-center justify-center active:scale-95 transition-all"
-            style={{ background: 'rgba(212, 112, 10, 0.1)' }}
+            style={{ background: 'rgba(252, 128, 25, 0.1)' }}
           >
-            <FaArrowLeft size={18} color="#D4700A" />
+            <FaArrowLeft size={18} color="#C97B4B" />
           </button>
           <div>
-            <h1 className="text-xl font-script" style={{ color: '#D4700A' }}>Payment</h1>
+            <h1 className="text-xl font-black" style={{ color: '#C97B4B' }}>Payment</h1>
             <p className="text-sm" style={{ color: '#7E7E7E' }}>Complete your order</p>
           </div>
         </div>
         {customer && (
           <div className="flex flex-col items-end">
-            <div className="text-[10px] uppercase font-bold tracking-wider mb-0.5" style={{ color: '#D4700A' }}>
+            <div className="text-[10px] uppercase font-bold tracking-wider mb-0.5" style={{ color: '#C97B4B' }}>
               {orderType}
             </div>
-            <div className="flex items-center gap-2 px-3 py-1 rounded-lg" style={{ border: '1px solid rgba(212, 112, 10, 0.3)', background: 'rgba(212, 112, 10, 0.1)' }}>
-              <span className="text-xs font-bold max-w-[80px] truncate" style={{ color: '#D4700A' }}>
+            <div className="flex items-center gap-2 px-3 py-1 rounded-lg" style={{ border: '1px solid rgba(252, 128, 25, 0.3)', background: 'rgba(252, 128, 25, 0.1)' }}>
+              <span className="text-xs font-bold max-w-[80px] truncate" style={{ color: '#C97B4B' }}>
                 {customer.name}
               </span>
             </div>
@@ -623,11 +623,7 @@ const Payment = () => {
                   </div>
                   Delivery Fee
                 </span>
-                {freeDelivery ? (
-                  <span className="text-green-600 font-semibold bg-green-50 px-2 py-0.5 rounded-lg text-xs">FREE</span>
-                ) : (
-                  <span>₹{(Number(deliveryFee) || 0).toFixed(0)}</span>
-                )}
+                <span>₹30</span>
               </div>
             )}
             {discount > 0 && (
@@ -661,8 +657,8 @@ const Payment = () => {
           disabled={loading}
           className="w-full h-16 text-white font-bold text-lg rounded-2xl active:scale-[0.98] transition-all flex justify-between items-center px-6 disabled:opacity-50 disabled:cursor-not-allowed"
           style={{
-            background: 'linear-gradient(135deg, #D4700A 0%, #E8923A 100%)',
-            boxShadow: '0 8px 32px rgba(212, 112, 10, 0.4)'
+            background: 'linear-gradient(135deg, #C97B4B 0%, #E8956A 100%)',
+            boxShadow: '0 8px 32px rgba(252, 128, 25, 0.4)'
           }}
         >
           <div className="flex items-center gap-3">
@@ -710,7 +706,14 @@ const Payment = () => {
         />
       )}
 
-
+      {/* Custom CSS */}
+      <style>{`
+        .safe-area-top { padding-top: env(safe-area-inset-top); }
+        .safe-area-bottom { padding-bottom: env(safe-area-inset-bottom); }
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: var(--border-card); border-radius: 4px; }
+      `}</style>
 
       <Footer />
     </div>

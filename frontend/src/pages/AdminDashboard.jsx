@@ -1,43 +1,21 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import {
-  FaUtensils,
-  FaSignOutAlt,
-} from "react-icons/fa";
+import { FaUtensils } from "react-icons/fa";
 
-// Import Modular Components
 import AdminLayout from "../components/admin/AdminLayout";
 import AdminOrders from "../components/admin/AdminOrders";
 import AdminMenu from "../components/admin/AdminMenu";
-import AdminOffers from "../components/admin/AdminOffers";
 import AdminCustomers from "../components/admin/AdminCustomers";
 import AdminStats from "../components/admin/AdminStats";
-import AdminSettings from "../components/admin/AdminSettings";
-
-// Import Modals (Refactored)
 import ProductFormModal from "../components/admin/ProductFormModal";
-import OfferFormModal from "../components/admin/OfferFormModal";
-import StoreLocationPicker from "../components/StoreLocationPicker";
 
-// Import Services
 import {
-  adminLogin, // Not used here directly but maybe implicitly needed if I missed something? No.
-  createProduct, // Used in modals, mostly.
-  updateProduct,
   deleteProduct,
   toggleProductAvailability,
+  deleteAllProducts,
   fetchProducts,
   updateOrderStatus,
-  fetchOffers, // Used in AdminOffers? No, fetched here.
-  createOffer,
-  deleteOffer,
   fetchAllOrders,
-  getUPISettingsAdmin,
-  updateUPISettings,
-  getStoreSettings,
-  updateStoreSettings,
-  getFeeSettings,
-  updateFeeSettings,
   manualVerifyPayment,
   acceptOrder,
 } from "../services/api";
@@ -46,48 +24,24 @@ import { useAuth } from "../context/AuthContext";
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
-  const { admin, logoutAdmin, isAdmin } = useAuth();
+  const { admin, logoutAdmin } = useAuth();
 
-  // URL-based Tab State
   const [searchParams, setSearchParams] = useSearchParams();
   const activeTab = searchParams.get("tab") || "orders";
   const setActiveTab = (tab) => setSearchParams({ tab });
 
-  // Data State
+  // Data
   const [orders, setOrders] = useState([]);
   const [products, setProducts] = useState([]);
-  const [offers, setOffers] = useState([]);
 
-  // Modals & Forms State
+  // Modals
   const [showProductForm, setShowProductForm] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
-  const [showOfferForm, setShowOfferForm] = useState(false);
-  const [showMapPicker, setShowMapPicker] = useState(false);
   const [showStockConfirm, setShowStockConfirm] = useState(null);
 
-  // Settings State (Lifted up for AdminSettings component)
-  const [loading, setLoading] = useState(true);
-  const [settingsForm, setSettingsForm] = useState({ upiId: "", payeeName: "" });
-  const [storeSettings, setStoreSettings] = useState({
-    isOpen: true,
-    storeLatitude: null,
-    storeLongitude: null,
-  });
-  const [feeSettings, setFeeSettings] = useState({
-    baseFee: 40,
-    perKmFee: 10,
-    freeDeliveryThreshold: 500,
-    maxDeliveryDistance: 15,
-  });
-
-  // Load Data
   useEffect(() => {
     loadOrders();
     loadProducts();
-    loadOffers();
-    loadSettings();
-
-    // Poll for new orders every 30s
     const interval = setInterval(loadOrders, 30000);
     return () => clearInterval(interval);
   }, []);
@@ -96,62 +50,27 @@ const AdminDashboard = () => {
     try {
       const { data } = await fetchAllOrders();
       setOrders(data.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)));
-    } catch (err) {
-      console.error(err);
-    }
+    } catch (err) { console.error(err); }
   };
 
   const loadProducts = async () => {
     try {
       const { data } = await fetchProducts();
       setProducts(data);
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
-  const loadOffers = async () => {
-    try {
-      const { data } = await fetchOffers(); // Corrected to use fetchOffers (public or admin?) - using service.
-      setOffers(data);
     } catch (err) { console.error(err); }
   };
 
-  const loadSettings = async () => {
-    try {
-      // Parallel fetch for speed
-      const [upiRes, storeRes, feeRes] = await Promise.allSettled([
-        getUPISettingsAdmin(),
-        getStoreSettings(),
-        getFeeSettings(),
-      ]);
 
-      if (upiRes.status === 'fulfilled' && upiRes.value.data) setSettingsForm(upiRes.value.data);
-      if (storeRes.status === 'fulfilled' && storeRes.value.data) setStoreSettings(storeRes.value.data);
-      if (feeRes.status === 'fulfilled' && feeRes.value.data) setFeeSettings(feeRes.value.data);
 
-      setLoading(false);
-    } catch (err) {
-      console.error(err);
-      setLoading(false);
-    }
-  };
-
-  // --- Actions ---
-
-  // Orders
+  // Order handlers
   const handleUpdateStatus = async (id, status) => {
-    try {
-      await updateOrderStatus(id, status);
-      loadOrders();
-    } catch (err) { alert("Failed to update status"); }
+    try { await updateOrderStatus(id, status); loadOrders(); }
+    catch (err) { alert("Failed to update status"); }
   };
 
   const handleAcceptOrder = async (id) => {
-    try {
-      await acceptOrder(id);
-      loadOrders();
-    } catch (err) { alert("Failed to accept order"); }
+    try { await acceptOrder(id); loadOrders(); }
+    catch (err) { alert("Failed to accept order"); }
   };
 
   const handleManualVerifyPayment = async (orderId) => {
@@ -163,7 +82,7 @@ const AdminDashboard = () => {
     }
   };
 
-  // Products
+  // Product handlers
   const confirmToggleStock = async () => {
     if (showStockConfirm) {
       try {
@@ -181,33 +100,23 @@ const AdminDashboard = () => {
     }
   };
 
-  // Offers
-  const handleDeleteOffer = async (id) => {
-    if (window.confirm("Delete offer?")) {
-      await deleteOffer(id);
-      loadOffers();
-    }
+  const handleClearAll = async () => {
+    try { await deleteAllProducts(); loadProducts(); }
+    catch (err) { alert('Failed to clear menu'); }
   };
 
   // Settings
-  const handleUpdateUPI = async () => {
-    try { await updateUPISettings(settingsForm); alert("UPI updated"); } catch (e) { alert("Error updating UPI"); }
-  };
   const handleUpdateStore = async () => {
-    try { await updateStoreSettings(storeSettings); alert("Store settings updated"); } catch (e) { alert("Error updating Store"); }
-  };
-  const handleUpdateFees = async () => {
-    try { await updateFeeSettings(feeSettings); alert("Fees updated"); } catch (e) { alert("Error updating Fees"); }
+    try { await updateStoreSettings(storeSettings); alert("Settings updated!"); }
+    catch (e) { alert("Error updating settings"); }
   };
 
-  // Auth
   const handleLogout = () => {
     logoutAdmin();
-    // navigate("/"); // Layout might handle this, or simple redirect
-    window.location.href = "/"; // Force reload clear
+    window.location.href = "/";
   };
 
-  // Derived Stats
+  // Stats
   const todayOrders = useMemo(() =>
     orders.filter(o => new Date(o.createdAt).toDateString() === new Date().toDateString()),
     [orders]);
@@ -219,25 +128,21 @@ const AdminDashboard = () => {
   const pendingOrders = orders.filter(o => o.status === 'Pending').length;
 
   return (
-    <AdminLayout activeTab={activeTab} setActiveTab={setActiveTab}>
-      {/* Mobile Header (Sticky - Inside Layout Main) */}
-      <header className="bg-gray-900 text-white px-4 py-4 sticky top-0 z-40 shadow-md">
+    <AdminLayout activeTab={activeTab} setActiveTab={setActiveTab} onLogout={handleLogout}>
+      {/* Header */}
+      <header className="sticky top-0 z-40 px-4 py-4"
+        style={{ background: '#FFFFFF', boxShadow: '0 4px 20px rgba(0,0,0,0.06)', borderBottomLeftRadius: '20px', borderBottomRightRadius: '20px' }}>
         <div className="flex justify-between items-center">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-orange-500 to-amber-500 rounded-xl flex items-center justify-center">
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center"
+              style={{ background: 'linear-gradient(135deg, #C97B4B 0%, #E8956A 100%)' }}>
               <FaUtensils className="text-white" />
             </div>
             <div>
-              <h1 className="font-bold text-lg leading-tight">Admin Panel</h1>
-              <p className="text-xs text-gray-400">{admin?.name || 'Admin'}</p>
+              <h1 className="font-bold text-lg leading-tight" style={{ color: '#C97B4B' }}>Admin Panel</h1>
+              <p className="text-xs" style={{ color: '#A0998F' }}>{admin?.name || 'Admin'}</p>
             </div>
           </div>
-          <button
-            onClick={handleLogout}
-            className="w-10 h-10 bg-red-500/20 text-red-400 rounded-xl flex items-center justify-center active:bg-red-500/30"
-          >
-            <FaSignOutAlt />
-          </button>
         </div>
       </header>
 
@@ -258,14 +163,7 @@ const AdminDashboard = () => {
           onEdit={(p) => { setEditingProduct(p); setShowProductForm(true); }}
           onDelete={handleDeleteProduct}
           onToggleAvailability={(p) => setShowStockConfirm(p)}
-        />
-      )}
-
-      {activeTab === 'offers' && (
-        <AdminOffers
-          offers={offers}
-          onAdd={() => setShowOfferForm(true)}
-          onDelete={handleDeleteOffer}
+          onClearAll={handleClearAll}
         />
       )}
 
@@ -278,25 +176,20 @@ const AdminDashboard = () => {
           todayOrders={todayOrders}
           todayRevenue={todayRevenue}
           pendingOrders={pendingOrders}
+          allOrders={orders}
+          products={products}
         />
       )}
 
       {activeTab === 'settings' && (
         <AdminSettings
-          settingsForm={settingsForm}
-          setSettingsForm={setSettingsForm}
           storeSettings={storeSettings}
           setStoreSettings={setStoreSettings}
-          feeSettings={feeSettings}
-          setFeeSettings={setFeeSettings}
-          onUpdateUPI={handleUpdateUPI}
           onUpdateStore={handleUpdateStore}
-          onUpdateFees={handleUpdateFees}
-          setShowMapPicker={setShowMapPicker}
         />
       )}
 
-      {/* Modals */}
+      {/* Product Form Modal */}
       {showProductForm && (
         <ProductFormModal
           product={editingProduct}
@@ -305,69 +198,40 @@ const AdminDashboard = () => {
         />
       )}
 
-      {showOfferForm && (
-        <OfferFormModal
-          onClose={() => setShowOfferForm(false)}
-          onSave={() => { loadOffers(); setShowOfferForm(false); }}
-        />
-      )}
-
-      {/* Stock Toggle Confirmation Modal (Inline for now as it's simple) */}
+      {/* Stock Toggle Confirmation */}
       {showStockConfirm && (
-        <div className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in">
-          <div className="bg-white rounded-3xl p-6 max-w-sm w-full shadow-2xl animate-scale-up">
+        <div className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl p-6 max-w-sm w-full shadow-2xl">
             <div className="text-center mb-6">
-              <div
-                className={`w-16 h-16 mx-auto rounded-full flex items-center justify-center mb-4 ${showStockConfirm.isAvailable ? "bg-red-100" : "bg-green-100"
-                  }`}
-              >
-                <span className="text-3xl">
-                  {showStockConfirm.isAvailable ? "⚠️" : "✅"}
-                </span>
+              <div className={`w-16 h-16 mx-auto rounded-full flex items-center justify-center mb-4`}
+                style={{ background: showStockConfirm.isAvailable ? '#FEE2E2' : '#DCFCE7' }}>
+                <span className="text-3xl">{showStockConfirm.isAvailable ? "⚠️" : "✅"}</span>
               </div>
-              <h3 className="text-xl font-bold text-gray-800 mb-2">
-                {showStockConfirm.isAvailable
-                  ? "Mark as Out of Stock?"
-                  : "Mark as In Stock?"}
+              <h3 className="text-xl font-bold mb-2" style={{ color: '#1C1C1C' }}>
+                {showStockConfirm.isAvailable ? "Mark as Out of Stock?" : "Mark as In Stock?"}
               </h3>
-              <p className="text-gray-500 text-sm">
-                Confirm stock update for
-                <span className="font-bold text-gray-700"> "{showStockConfirm.name}"</span>
+              <p className="text-sm" style={{ color: '#7E7E7E' }}>
+                Confirm for <span className="font-bold" style={{ color: '#1C1C1C' }}>"{showStockConfirm.name}"</span>
               </p>
             </div>
             <div className="flex gap-3">
-              <button
-                onClick={() => setShowStockConfirm(null)}
-                className="flex-1 py-3 bg-gray-100 text-gray-700 font-bold rounded-xl active:bg-gray-200"
-              >
+              <button onClick={() => setShowStockConfirm(null)}
+                className="flex-1 py-3 font-bold rounded-xl"
+                style={{ background: '#FAF7F2', color: '#7E7E7E', border: '2px solid #E8E3DB' }}>
                 Cancel
               </button>
-              <button
-                onClick={confirmToggleStock}
-                className={`flex-1 py-3 font-bold rounded-xl active:scale-[0.98] transition-transform ${showStockConfirm.isAvailable
-                  ? "bg-red-500 text-white shadow-lg shadow-red-200"
-                  : "bg-green-500 text-white shadow-lg shadow-green-200"
-                  }`}
-              >
+              <button onClick={confirmToggleStock}
+                className="flex-1 py-3 font-bold rounded-xl text-white active:scale-[0.98]"
+                style={{
+                  background: showStockConfirm.isAvailable ? '#DC2626' : '#16A34A',
+                  boxShadow: showStockConfirm.isAvailable ? '0 4px 12px rgba(220,38,38,0.3)' : '0 4px 12px rgba(22,163,74,0.3)'
+                }}>
                 Confirm
               </button>
             </div>
           </div>
         </div>
       )}
-
-      <StoreLocationPicker
-        isOpen={showMapPicker}
-        onClose={() => setShowMapPicker(false)}
-        initialLocation={{
-          lat: storeSettings.storeLatitude || 28.6139,
-          lng: storeSettings.storeLongitude || 77.209,
-        }}
-        onSave={(location) => {
-          setStoreSettings({ ...storeSettings, storeLatitude: location.lat, storeLongitude: location.lng });
-          setShowMapPicker(false);
-        }}
-      />
 
     </AdminLayout>
   );

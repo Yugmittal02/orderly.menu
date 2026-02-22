@@ -69,20 +69,17 @@ const SideCart = memo(({ isOpen, onClose }) => {
         className={`fixed top-0 right-0 h-full w-full sm:w-96 md:w-[420px] z-[101] shadow-2xl transform transition-transform duration-300 ease-out flex flex-col ${isAnimating && isOpen ? "translate-x-0" : "translate-x-full"
           }`}
         style={{ background: '#FAF7F2', willChange: 'transform' }}
-        role="dialog"
-        aria-modal="true"
-        aria-label="Shopping cart"
       >
         {/* Header */}
         <div className="flex items-center justify-between p-4 safe-area-top"
-          style={{ background: '#FFFFFF', borderBottom: '3px solid #D4700A' }}>
+          style={{ background: '#FFFFFF', borderBottom: 'none', boxShadow: '0 2px 12px rgba(0,0,0,0.05)', borderBottomLeftRadius: '20px', borderBottomRightRadius: '20px' }}>
           <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-xl flex items-center justify-center"
-              style={{ background: 'rgba(212, 112, 10, 0.1)' }}>
-              <FaShoppingBag size={18} color="#D4700A" />
+            <div className="w-10 h-10 rounded-full flex items-center justify-center"
+              style={{ background: 'rgba(252, 128, 25, 0.1)' }}>
+              <FaShoppingBag size={18} color="#C97B4B" />
             </div>
             <div>
-              <h2 className="font-bold text-lg" style={{ color: '#D4700A' }}>Your Cart</h2>
+              <h2 className="font-bold text-lg" style={{ color: '#C97B4B' }}>Your Cart</h2>
               <p className="text-xs" style={{ color: '#7E7E7E' }}>
                 {getItemCount()} item{getItemCount() !== 1 ? "s" : ""}
               </p>
@@ -90,10 +87,10 @@ const SideCart = memo(({ isOpen, onClose }) => {
           </div>
           <button
             onClick={handleClose}
-            className="w-10 h-10 rounded-xl flex items-center justify-center active:scale-95 transition-transform"
-            style={{ background: 'rgba(212, 112, 10, 0.1)' }}
+            className="w-9 h-9 rounded-full flex items-center justify-center active:scale-95 transition-transform"
+            style={{ background: 'rgba(252, 128, 25, 0.1)' }}
           >
-            <FaTimes size={18} color="#D4700A" />
+            <FaTimes size={18} color="#C97B4B" />
           </button>
         </div>
 
@@ -101,8 +98,8 @@ const SideCart = memo(({ isOpen, onClose }) => {
         <div className="flex-1 overflow-y-auto p-4 scroll-container hide-scrollbar">
           {cart.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full text-center">
-              <div className="w-28 h-28 rounded-2xl flex items-center justify-center mb-4"
-                style={{ background: 'linear-gradient(135deg, #FEF3E2 0%, #FDE8CC 100%)', border: '3px solid #E8E3DB' }}>
+              <div className="w-24 h-24 rounded-full flex items-center justify-center mb-4"
+                style={{ background: 'linear-gradient(135deg, #FEF3E2 0%, #FDE8CC 100%)', border: '2px solid #E8E3DB' }}>
                 <span className="text-5xl">🛒</span>
               </div>
               <p className="font-semibold text-lg" style={{ color: '#1C1C1C' }}>
@@ -113,8 +110,8 @@ const SideCart = memo(({ isOpen, onClose }) => {
               </p>
               <button
                 onClick={handleClose}
-                className="mt-6 px-8 py-3 text-white font-bold rounded-xl active:scale-95 transition-transform"
-                style={{ background: 'linear-gradient(135deg, #D4700A 0%, #E8923A 100%)', boxShadow: '0 4px 16px rgba(212, 112, 10, 0.3)' }}
+                className="mt-6 px-8 py-3 text-white font-bold rounded-full active:scale-95 transition-transform"
+                style={{ background: 'linear-gradient(135deg, #C97B4B 0%, #E8956A 100%)', boxShadow: '0 6px 20px rgba(252, 128, 25, 0.3)' }}
               >
                 🍰 Browse Menu
               </button>
@@ -148,7 +145,7 @@ const SideCart = memo(({ isOpen, onClose }) => {
                       <div className="flex flex-wrap gap-1 mt-1">
                         {item.size && (
                           <span className="text-[10px] px-2 py-0.5 rounded-md font-medium"
-                            style={{ background: '#FFF5EE', color: '#D4700A' }}>
+                            style={{ background: '#FFF5EE', color: '#C97B4B' }}>
                             {item.size}
                           </span>
                         )}
@@ -162,7 +159,7 @@ const SideCart = memo(({ isOpen, onClose }) => {
                           </span>
                         ))}
                       </div>
-                      <p className="font-bold text-base mt-2" style={{ color: '#D4700A' }}>
+                      <p className="font-bold text-base mt-2" style={{ color: '#C97B4B' }}>
                         ₹{(Number(item.price) || 0) * (Number(item.quantity) || 1)}
                       </p>
                     </div>
@@ -182,7 +179,7 @@ const SideCart = memo(({ isOpen, onClose }) => {
                           className="w-7 h-7 rounded-lg flex items-center justify-center active:scale-90 transition-transform"
                           style={{ background: 'white' }}
                         >
-                          <FaMinus size={9} color="#D4700A" />
+                          <FaMinus size={9} color="#C97B4B" />
                         </button>
                         <span className="font-bold w-5 text-center text-sm" style={{ color: '#1C1C1C' }}>
                           {item.quantity}
@@ -190,7 +187,7 @@ const SideCart = memo(({ isOpen, onClose }) => {
                         <button
                           onClick={() => handleUpdateQty(item.cartId, 1)}
                           className="w-7 h-7 rounded-lg text-white flex items-center justify-center active:scale-90 transition-transform"
-                          style={{ background: 'linear-gradient(135deg, #D4700A 0%, #E8923A 100%)' }}
+                          style={{ background: 'linear-gradient(135deg, #C97B4B 0%, #E8956A 100%)' }}
                         >
                           <FaPlus size={9} />
                         </button>
@@ -205,14 +202,14 @@ const SideCart = memo(({ isOpen, onClose }) => {
 
         {/* Bottom Checkout Section */}
         {cart.length > 0 && (
-          <div className="p-4 border-t-2" style={{ borderColor: '#D4700A', background: 'white' }}>
+          <div className="p-4 border-t" style={{ borderColor: '#f0f0f0', background: 'white', borderTopLeftRadius: '20px', borderTopRightRadius: '20px', boxShadow: '0 -4px 20px rgba(0,0,0,0.05)' }}>
             {/* Total */}
             <div className="flex justify-between items-center mb-4">
               <div>
                 <p className="text-xs uppercase font-medium" style={{ color: '#7E7E7E' }}>
                   Subtotal
                 </p>
-                <p className="text-2xl font-bold" style={{ color: '#D4700A' }}>
+                <p className="text-2xl font-bold" style={{ color: '#C97B4B' }}>
                   ₹{total.toFixed(0)}
                 </p>
               </div>
@@ -227,10 +224,10 @@ const SideCart = memo(({ isOpen, onClose }) => {
             {/* Checkout Button */}
             <button
               onClick={handleCheckout}
-              className="w-full h-14 text-white font-bold text-base rounded-2xl shadow-xl active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+              className="w-full h-14 text-white font-bold text-base rounded-full shadow-xl active:scale-[0.98] transition-all flex items-center justify-center gap-2"
               style={{
-                background: 'linear-gradient(135deg, #D4700A 0%, #E8923A 100%)',
-                boxShadow: '0 8px 24px rgba(212, 112, 10, 0.35)'
+                background: 'linear-gradient(135deg, #C97B4B 0%, #E8956A 100%)',
+                boxShadow: '0 8px 24px rgba(252, 128, 25, 0.35)'
               }}
             >
               <span>Proceed to Checkout</span>

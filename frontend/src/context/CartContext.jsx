@@ -1,4 +1,5 @@
-import React, { createContext, useState, useContext, useEffect } from "react";
+import React, { createContext, useState, useContext, useEffect, useRef } from "react";
+import { syncCartToDB, getCartFromDB } from "../services/api";
 
 const CartContext = createContext();
 
@@ -13,9 +14,10 @@ const getStoredCart = () => {
 };
 
 export const CartProvider = ({ children }) => {
-  // Initialize cart from localStorage
   const [cart, setCart] = useState(() => getStoredCart());
   const [total, setTotal] = useState(0);
+  const syncTimeoutRef = useRef(null);
+  const hasLoadedFromDB = useRef(false);
 
   // Calculate total whenever cart changes
   useEffect(() => {
@@ -39,8 +41,54 @@ export const CartProvider = ({ children }) => {
     }
   }, [cart]);
 
+  // Debounced sync to DB (only if user is logged in)
+  useEffect(() => {
+    if (!hasLoadedFromDB.current) return; // Don't sync before initial load
+
+    const token = localStorage.getItem("token");
+    if (!token) return;
+
+    // Debounce: wait 1s after last change before syncing
+    if (syncTimeoutRef.current) clearTimeout(syncTimeoutRef.current);
+    syncTimeoutRef.current = setTimeout(() => {
+      syncCartToDB(cart).catch(err => console.error("Cart sync error:", err));
+    }, 1000);
+
+    return () => {
+      if (syncTimeoutRef.current) clearTimeout(syncTimeoutRef.current);
+    };
+  }, [cart]);
+
+  // Load cart from DB on mount if user is logged in
+  useEffect(() => {
+    const loadCartFromDB = async () => {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        hasLoadedFromDB.current = true;
+        return;
+      }
+
+      try {
+        const { data } = await getCartFromDB();
+        if (data && data.length > 0) {
+          // Merge: DB cart takes priority, but also keep any localStorage items not in DB
+          const localCart = getStoredCart();
+          const dbCartIds = new Set(data.map(item => item.cartId));
+          const uniqueLocal = localCart.filter(item => !dbCartIds.has(item.cartId));
+          const merged = [...data, ...uniqueLocal];
+          setCart(merged);
+        }
+      } catch (err) {
+        // Silently fail — localStorage cart as fallback
+        console.error("Failed to load cart from DB:", err);
+      }
+      hasLoadedFromDB.current = true;
+    };
+
+    loadCartFromDB();
+  }, []);
+
   const addToCart = (item) => {
-    // Add with unique ID based on product, size, and addons
     const cartItem = {
       ...item,
       cartId: `${item._id}-${item.size || "default"}-${(item.selectedAddons || []).join("-")}-${Date.now()}`,
@@ -69,11 +117,15 @@ export const CartProvider = ({ children }) => {
 
   const clearCart = () => {
     setCart([]);
-    // Also clear from localStorage
     try {
       localStorage.removeItem("sewashubham_cart");
     } catch (e) {
       console.error("Failed to clear cart from localStorage:", e);
+    }
+    // Also clear in DB
+    const token = localStorage.getItem("token");
+    if (token) {
+      syncCartToDB([]).catch(err => console.error("Cart clear sync error:", err));
     }
   };
 

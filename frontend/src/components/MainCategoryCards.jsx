@@ -1,128 +1,115 @@
-import React, { useRef } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import SubCategoryRow from './SubCategoryRow';
 
 const MainCategoryCards = ({ onCategorySelect, activeCategory }) => {
     const navigate = useNavigate();
-    const scrollRef = useRef(null);
 
     const categories = [
         {
             id: 'cake',
-            name: 'Cakes',
-            image: 'https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=100&h=100&fit=crop&q=80',
-            color: '#D4700A',
+            name: 'Cake',
+            icon: '🎂',
+            image: 'https://images.unsplash.com/photo-1621303837174-89787a7d4729?w=400&h=400&fit=crop&q=80',
         },
         {
-            id: 'pastry',
-            name: 'Pastries',
-            image: 'https://images.unsplash.com/photo-1509440159596-0249088772ff?w=100&h=100&fit=crop&q=80',
-            color: '#DC2626',
+            id: 'fastfood',
+            name: 'Fastfood',
+            icon: '🍔',
+            image: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=400&h=400&fit=crop&q=80',
         },
         {
-            id: 'cookie',
-            name: 'Cookies',
-            image: 'https://images.unsplash.com/photo-1558961363-fa8fdf82db35?w=100&h=100&fit=crop&q=80',
-            color: '#B45309',
+            id: 'bakery',
+            name: 'Bakery',
+            icon: '🥐',
+            image: 'https://images.unsplash.com/photo-1608198093002-ad4e005484ec?w=400&h=400&fit=crop&q=80',
         },
         {
-            id: 'bread',
-            name: 'Breads',
-            image: 'https://images.unsplash.com/photo-1549931319-a545753467c8?w=100&h=100&fit=crop&q=80',
-            color: '#92400E',
+            id: 'beverages',
+            name: 'Beverages',
+            icon: '☕',
+            image: 'https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=400&h=400&fit=crop&q=80',
         },
         {
-            id: 'dessert',
-            name: 'Desserts',
-            image: 'https://images.unsplash.com/photo-1488477181946-6428a0291777?w=100&h=100&fit=crop&q=80',
-            color: '#7C3AED',
+            id: 'flowers',
+            name: 'Flowers',
+            icon: '💐',
+            image: 'https://images.unsplash.com/photo-1455659817273-f96807779a8a?w=400&h=400&fit=crop&q=80',
         },
         {
-            id: 'snack',
-            name: 'Snacks',
-            image: 'https://images.unsplash.com/photo-1621939514649-280e2ee25f60?w=100&h=100&fit=crop&q=80',
-            color: '#0D9488',
+            id: 'anniversary',
+            name: 'Anniversary',
+            icon: '💑',
+            image: 'https://images.unsplash.com/photo-1535254973040-607b474cb50d?w=400&h=400&fit=crop&q=80',
         },
     ];
 
     const handleCategoryClick = (categoryId) => {
-        if (onCategorySelect) {
-            onCategorySelect(categoryId);
-        } else {
-            navigate(`/category/${categoryId}`);
-        }
+        navigate(`/category/${categoryId}`);
     };
 
     return (
-        <div style={{ padding: '12px 0' }}>
-            {/* Category Pill Row */}
-            <div
-                ref={scrollRef}
-                className="hide-scrollbar"
-                style={{
+        <>
+            <section className="category-section-wrapper">
+                <div className="category-section-title">
+                    <h2>Our Categories</h2>
+                    <p>Explore our delicious collection</p>
+                </div>
+                {/* Circular Category Items - Horizontal Scroll */}
+                <div style={{
                     display: 'flex',
-                    gap: '10px',
+                    gap: '20px',
+                    padding: '0 16px 8px',
                     overflowX: 'auto',
-                    padding: '4px 16px 12px',
-                    WebkitOverflowScrolling: 'touch',
-                }}
-            >
-                {categories.map((cat) => {
-                    const isActive = activeCategory === cat.id;
-                    return (
+                    justifyContent: 'flex-start'
+                }} className="hide-scrollbar">
+                    {categories.map((category, index) => (
                         <button
-                            key={cat.id}
-                            onClick={() => handleCategoryClick(cat.id)}
+                            key={category.id}
+                            onClick={() => handleCategoryClick(category.id)}
                             style={{
-                                flexShrink: 0,
                                 display: 'flex',
+                                flexDirection: 'column',
                                 alignItems: 'center',
                                 gap: '8px',
-                                padding: '8px 16px 8px 8px',
-                                borderRadius: '9999px',
-                                border: isActive ? `2px solid ${cat.color}` : '2px solid #EDE6DC',
-                                background: isActive ? `${cat.color}10` : '#FFFFFF',
+                                background: 'none',
+                                border: 'none',
                                 cursor: 'pointer',
-                                transition: 'all 0.3s ease',
-                                minHeight: '44px',
-                                boxShadow: isActive
-                                    ? `0 4px 12px ${cat.color}30`
-                                    : '0 2px 8px rgba(58, 42, 28, 0.06)',
+                                flexShrink: 0,
+                                transition: 'transform 0.2s ease'
                             }}
+                            className="active:scale-95"
                         >
-                            <img
-                                src={cat.image}
-                                alt={cat.name}
-                                style={{
-                                    width: '32px',
-                                    height: '32px',
-                                    borderRadius: '50%',
-                                    objectFit: 'cover',
-                                    border: `2px solid ${isActive ? cat.color : '#EDE6DC'}`,
-                                }}
-                                loading="lazy"
-                            />
+                            <div style={{
+                                width: '80px',
+                                height: '80px',
+                                borderRadius: '50%',
+                                overflow: 'hidden',
+                                border: activeCategory === category.id ? '3px solid #C97B4B' : '3px solid #FFFFFF',
+                                boxShadow: '0 4px 16px rgba(45,24,16,0.10)',
+                            }}>
+                                <img
+                                    src={category.image}
+                                    alt={category.name}
+                                    loading="lazy"
+                                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                />
+                            </div>
                             <span style={{
                                 fontSize: '13px',
-                                fontWeight: isActive ? 700 : 600,
-                                color: isActive ? cat.color : '#3B322A',
-                                whiteSpace: 'nowrap',
+                                fontWeight: 600,
+                                color: activeCategory === category.id ? '#C97B4B' : '#5C3A2A'
                             }}>
-                                {cat.name}
+                                {category.name}
                             </span>
                         </button>
-                    );
-                })}
-            </div>
+                    ))}
+                </div>
+            </section>
 
-            {/* SubCategory Quick Picks */}
-            {activeCategory && (
-                <SubCategoryRow
-                    category={activeCategory}
-                    onSubCategorySelect={(subId) => navigate(`/category/${activeCategory}?sub=${subId}`)}
-                />
-            )}
-        </div>
+            {/* Subcategory Quick Links */}
+            <SubCategoryRow onSubCategorySelect={onCategorySelect} />
+        </>
     );
 };
 
