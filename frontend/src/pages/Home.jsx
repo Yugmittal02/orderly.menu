@@ -248,6 +248,11 @@ const Home = () => {
         return products.length > 0 ? products[0] : null;
     }, [products]);
 
+    // Get bestseller products
+    const bestsellerProducts = useMemo(() => {
+        return filteredProducts.filter(p => p.isBestseller);
+    }, [filteredProducts]);
+
     const handleItemAdded = useCallback(() => {
         setShowSideCart(true);
     }, []);
@@ -311,7 +316,7 @@ const Home = () => {
             )}
 
             {/* Bestsellers Section - Premium Design */}
-            {!loading && filteredProducts.length > 0 && (
+            {!loading && bestsellerProducts.length > 0 && (
                 <section className="bestsellers-section">
                     <div className="bestsellers-header">
                         <div className="bestsellers-title">
@@ -322,7 +327,7 @@ const Home = () => {
                         <p className="bestsellers-subtitle">Our most loved treats</p>
                     </div>
                     <div className="bestsellers-grid">
-                        {filteredProducts.slice(0, 6).map((product, index) => (
+                        {bestsellerProducts.slice(0, 6).map((product, index) => (
                             <div key={product._id} className="bestseller-card-wrapper animate-fade-in-up" style={{ animationDelay: `${index * 0.1}s` }}>
                                 <ProductCardNew
                                     product={{ ...product, isBestseller: true }}

@@ -2,10 +2,10 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
-import { getFeeSettings } from '../services/api';
+import { getFeeSettings, validateCoupon } from '../services/api';
 import {
   FaArrowLeft, FaTruck, FaUtensils, FaMinus, FaPlus, FaTrash, FaMapMarkerAlt,
-  FaEdit, FaShoppingBag, FaClock, FaShieldAlt, FaPercent, FaGift, FaTag
+  FaEdit, FaShoppingBag, FaClock, FaShieldAlt, FaPercent, FaGift, FaTag, FaTimes, FaCheckCircle
 } from 'react-icons/fa';
 
 const Cart = () => {
@@ -15,6 +15,10 @@ const Cart = () => {
   const [orderType, setOrderType] = useState('Delivery');
   const [selectedAddressIndex, setSelectedAddressIndex] = useState(0);
   const [feeSettings, setFeeSettings] = useState({ deliveryFeeBase: 30, freeDeliveryThreshold: 299 });
+  const [couponCode, setCouponCode] = useState('');
+  const [couponLoading, setCouponLoading] = useState(false);
+  const [couponError, setCouponError] = useState('');
+  const [appliedOffer, setAppliedOffer] = useState(null);
 
   useEffect(() => {
     getFeeSettings().then(res => {
@@ -28,7 +32,43 @@ const Cart = () => {
   const deliveryFee = orderType === 'Delivery'
     ? (total >= (feeSettings.freeDeliveryThreshold || 299) ? 0 : (feeSettings.deliveryFeeBase || 30))
     : 0;
-  const grandTotal = total + deliveryFee;
+  const discountAmount = appliedOffer ? (appliedOffer.calculatedDiscount || 0) : 0;
+  const grandTotal = total + deliveryFee - discountAmount;
+
+  const handleApplyCoupon = async () => {
+    if (!couponCode.trim()) {
+      setCouponError('Please enter a coupon code');
+      return;
+    }
+    setCouponLoading(true);
+    setCouponError('');
+    try {
+      const response = await validateCoupon(couponCode.trim().toUpperCase(), total);
+      const offer = response?.data?.offer;
+      if (offer) {
+        let discount = 0;
+        if (offer.discountType === 'percentage') {
+          discount = Math.round(total * (offer.discountValue / 100));
+        } else {
+          discount = offer.discountValue;
+        }
+        setAppliedOffer({ ...offer, calculatedDiscount: discount });
+        setCouponError('');
+      } else {
+        setCouponError('Invalid coupon code');
+      }
+    } catch (err) {
+      setCouponError(err.response?.data?.message || 'Invalid or expired coupon code');
+    } finally {
+      setCouponLoading(false);
+    }
+  };
+
+  const handleRemoveCoupon = () => {
+    setAppliedOffer(null);
+    setCouponCode('');
+    setCouponError('');
+  };
 
   const handleCheckout = () => {
     if (cart.length === 0) return;
@@ -47,7 +87,12 @@ const Cart = () => {
         deliveryAddress: orderType === 'Delivery' ? selectedAddress : null,
         subtotal: Number(total) || 0,
         deliveryFee: Number(deliveryFee) || 0,
-        grandTotal: Number(grandTotal) || 0
+        grandTotal: Number(grandTotal) || 0,
+        appliedOffer: appliedOffer ? {
+          offerId: appliedOffer._id,
+          code: appliedOffer.code,
+          discountAmount: discountAmount
+        } : null
       }
     });
   };
@@ -200,6 +245,14 @@ const Cart = () => {
               </div>
               <div className="flex-1 min-w-0">
                 <h4 className="font-semibold truncate" style={{ color: '#1C1C1C' }}>{item.name}</h4>
+                {item.size && (
+                  <span className="inline-block text-xs font-medium px-2 py-0.5 rounded-full mt-1" style={{ background: '#FEF3E2', color: '#C97B4B', border: '1px solid #E8E3DB' }}>
+                    {item.size}
+                  </span>
+                )}
+                {item.selectedAddons && item.selectedAddons.length > 0 && (
+                  <p className="text-xs mt-0.5" style={{ color: '#A0998F' }}>+ {item.selectedAddons.join(', ')}</p>
+                )}
                 <p className="text-sm mt-0.5" style={{ color: '#7E7E7E' }}>₹{itemPrice} each</p>
                 <div className="flex items-center justify-between mt-2">
                   <span className="font-bold" style={{ color: '#C97B4B' }}>₹{itemPrice * itemQty}</span>
@@ -228,19 +281,47 @@ const Cart = () => {
       </div>
 
       {/* Coupon Section */}
-      <div className="mx-4 mt-4 p-4 rounded-2xl flex items-center gap-3"
-        style={{ background: 'linear-gradient(135deg, #FEF3E2 0%, #FDE8CC 100%)', border: '2px dashed #C97B4B' }}>
-        <FaTag size={18} color="#C97B4B" />
-        <input
-          type="text"
-          placeholder="Have a coupon code?"
-          className="flex-1 bg-transparent outline-none text-sm font-medium"
-          style={{ color: '#C97B4B' }}
-        />
-        <button className="px-5 py-2 rounded-full text-white text-sm font-bold active:scale-95 transition-transform"
-          style={{ background: 'linear-gradient(135deg, #C97B4B 0%, #E8956A 100%)' }}>
-          Apply
-        </button>
+      <div className="mx-4 mt-4 p-4 rounded-2xl"
+        style={{ background: appliedOffer ? '#F0FDF4' : 'linear-gradient(135deg, #FEF3E2 0%, #FDE8CC 100%)', border: appliedOffer ? '2px solid #22C55E' : '2px dashed #C97B4B' }}>
+        {appliedOffer ? (
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <FaCheckCircle size={18} color="#22C55E" />
+              <div>
+                <p className="text-sm font-bold" style={{ color: '#166534' }}>{appliedOffer.code} applied!</p>
+                <p className="text-xs" style={{ color: '#15803D' }}>You save ₹{appliedOffer.calculatedDiscount}</p>
+              </div>
+            </div>
+            <button onClick={handleRemoveCoupon} className="p-2 rounded-full" style={{ background: '#FEE2E2' }}>
+              <FaTimes size={12} color="#DC2626" />
+            </button>
+          </div>
+        ) : (
+          <>
+            <div className="flex items-center gap-3">
+              <FaTag size={18} color="#C97B4B" />
+              <input
+                type="text"
+                placeholder="Have a coupon code?"
+                value={couponCode}
+                onChange={(e) => { setCouponCode(e.target.value.toUpperCase()); setCouponError(''); }}
+                onKeyDown={(e) => e.key === 'Enter' && handleApplyCoupon()}
+                className="flex-1 bg-transparent outline-none text-sm font-medium uppercase"
+                style={{ color: '#C97B4B' }}
+              />
+              <button
+                onClick={handleApplyCoupon}
+                disabled={couponLoading || !couponCode.trim()}
+                className="px-5 py-2 rounded-full text-white text-sm font-bold active:scale-95 transition-transform disabled:opacity-50"
+                style={{ background: 'linear-gradient(135deg, #C97B4B 0%, #E8956A 100%)' }}>
+                {couponLoading ? '...' : 'Apply'}
+              </button>
+            </div>
+            {couponError && (
+              <p className="text-xs mt-2 font-medium" style={{ color: '#DC2626' }}>⚠️ {couponError}</p>
+            )}
+          </>
+        )}
       </div>
 
       {/* Bill Summary */}
@@ -264,6 +345,12 @@ const Cart = () => {
               ) : (
                 <span className="font-semibold" style={{ color: '#1C1C1C' }}>₹{deliveryFee}</span>
               )}
+            </div>
+          )}
+          {appliedOffer && discountAmount > 0 && (
+            <div className="flex justify-between text-sm">
+              <span style={{ color: '#22C55E' }}>Coupon Discount ({appliedOffer.code})</span>
+              <span className="font-semibold text-green-600">-₹{discountAmount}</span>
             </div>
           )}
           <div className="pt-3 flex justify-between" style={{ borderTop: '2px dashed #E8E3DB' }}>

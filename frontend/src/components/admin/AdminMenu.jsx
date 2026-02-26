@@ -95,7 +95,12 @@ const AdminMenu = ({
                                     <h3 className="font-bold text-sm truncate pr-2" style={{ color: '#1C1C1C' }}>{product.name}</h3>
                                     <p className="font-bold" style={{ color: '#C97B4B' }}>₹{product.basePrice}</p>
                                 </div>
-                                <p className="text-xs" style={{ color: '#A0998F' }}>{product.category}</p>
+                                <p className="text-xs" style={{ color: '#A0998F' }}>
+                                    {product.category}
+                                    {product.isBestseller && (
+                                        <span className="ml-2 px-2 py-0.5 rounded-full text-[10px] font-bold" style={{ background: '#FEF3E2', color: '#C97B4B', border: '1px solid #E8E3DB' }}>⭐ Bestseller</span>
+                                    )}
+                                </p>
                             </div>
 
                             {/* Actions */}

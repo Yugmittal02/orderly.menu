@@ -37,19 +37,20 @@ const UserDashboard = () => {
 
     const getStatusIcon = (status) => {
         switch (status) {
-            case 'delivered': return <FaCheckCircle size={12} className="text-green-500" />;
-            case 'preparing': return <FaUtensils size={12} className="text-orange-500" />;
-            case 'out_for_delivery': return <FaBoxOpen size={12} className="text-blue-500" />;
+            case 'Delivered': return <FaCheckCircle size={12} className="text-green-500" />;
+            case 'Preparing': return <FaUtensils size={12} className="text-orange-500" />;
+            case 'Ready': return <FaBoxOpen size={12} className="text-blue-500" />;
+            case 'Cancelled': return <FaClock size={12} className="text-red-500" />;
             default: return <FaClock size={12} className="text-yellow-500" />;
         }
     };
 
     const getStatusColor = (status) => {
         switch (status) {
-            case 'delivered': return { bg: '#DCFCE7', text: '#166534', border: '#BBF7D0' };
-            case 'preparing': return { bg: '#FEF3C7', text: '#92400E', border: '#FDE68A' };
-            case 'out_for_delivery': return { bg: '#DBEAFE', text: '#1E40AF', border: '#BFDBFE' };
-            case 'cancelled': return { bg: '#FEE2E2', text: '#991B1B', border: '#FECACA' };
+            case 'Delivered': return { bg: '#DCFCE7', text: '#166534', border: '#BBF7D0' };
+            case 'Preparing': return { bg: '#FEF3C7', text: '#92400E', border: '#FDE68A' };
+            case 'Ready': return { bg: '#DBEAFE', text: '#1E40AF', border: '#BFDBFE' };
+            case 'Cancelled': return { bg: '#FEE2E2', text: '#991B1B', border: '#FECACA' };
             default: return { bg: '#FEF3E2', text: '#6B4423', border: '#FDE8CC' };
         }
     };
@@ -69,7 +70,7 @@ const UserDashboard = () => {
 
     if (!customer) return null;
 
-    const totalSpent = orders.reduce((sum, o) => sum + (o.total || 0), 0);
+    const totalSpent = orders.reduce((sum, o) => sum + (o.totalAmount || 0), 0);
 
     return (
         <div className="min-h-screen pb-24" style={{ background: 'linear-gradient(180deg, #1C1117 0%, #F5F0E8 25%, #FAF7F2 100%)' }}>
@@ -159,10 +160,10 @@ const UserDashboard = () => {
             <div className={`mx-3 mt-4 transition-all duration-700 delay-200 ${loaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
                 <div className="p-1 rounded-2xl" style={{ background: 'white', boxShadow: '0 4px 15px rgba(0,0,0,0.05)', border: '1px solid #F3F0EB' }}>
                     {[
-                        { icon: <FaShoppingBag size={16} color="#F97316" />, label: 'My Orders', sub: `${orders.length} orders placed`, action: () => { }, bg: '#FFF7ED' },
+                        { icon: <FaShoppingBag size={16} color="#F97316" />, label: 'My Orders', sub: `${orders.length} orders placed`, action: () => { const el = document.getElementById('recent-orders-section'); if (el) el.scrollIntoView({ behavior: 'smooth' }); }, bg: '#FFF7ED' },
                         { icon: <FaMapMarkerAlt size={16} color="#3B82F6" />, label: 'Saved Address', sub: 'Manage delivery address', action: () => navigate('/address/add'), bg: '#EFF6FF' },
-                        { icon: <FaHeart size={16} color="#EF4444" />, label: 'Favorites', sub: 'Your liked items', action: () => navigate('/favorites'), bg: '#FEF2F2' },
-                        { icon: <FaPercent size={14} color="#22C55E" />, label: 'Offers & Coupons', sub: 'Available discounts', action: () => navigate('/offers'), bg: '#F0FDF4' },
+                        { icon: <FaHeart size={16} color="#EF4444" />, label: 'Favorites', sub: 'Browse your liked items', action: () => navigate('/menu'), bg: '#FEF2F2' },
+                        { icon: <FaPercent size={14} color="#22C55E" />, label: 'Offers & Coupons', sub: 'Available discounts', action: () => navigate('/menu'), bg: '#F0FDF4' },
                     ].map((item, i) => (
                         <button key={i} onClick={item.action}
                             className="w-full flex items-center gap-3 p-3.5 rounded-xl transition-all active:scale-[0.98] active:bg-gray-50"
@@ -226,7 +227,7 @@ const UserDashboard = () => {
             </div>
 
             {/* Recent Orders */}
-            <div className={`mx-3 mt-5 transition-all duration-700 delay-400 ${loaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
+            <div id="recent-orders-section" className={`mx-3 mt-5 transition-all duration-700 delay-400 ${loaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
                 <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-2">
                         <FaReceipt size={14} color="#F97316" />
@@ -299,7 +300,7 @@ const UserDashboard = () => {
                                         <p className="text-xs" style={{ color: '#9CA3AF' }}>
                                             🍽️ {order.items?.length} item{order.items?.length > 1 ? 's' : ''}
                                         </p>
-                                        <p className="font-bold text-sm" style={{ color: '#F97316' }}>₹{order.total}</p>
+                                        <p className="font-bold text-sm" style={{ color: '#F97316' }}>₹{order.totalAmount}</p>
                                     </div>
                                 </div>
                             );

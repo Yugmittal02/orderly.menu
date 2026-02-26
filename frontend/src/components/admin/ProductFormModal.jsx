@@ -11,6 +11,7 @@ const ProductFormModal = ({ product, onClose, onSave }) => {
         image: product?.image || "",
         sizes: product?.sizes || [],
         addons: product?.addons || [],
+        isBestseller: product?.isBestseller || false,
     });
     const [newSize, setNewSize] = useState({ name: "", price: "" });
     const [newAddon, setNewAddon] = useState({ name: "", price: "" });
@@ -273,6 +274,21 @@ const ProductFormModal = ({ product, onClose, onSave }) => {
                             className="w-full rounded-xl p-3 text-sm outline-none"
                             style={inputStyle} required
                         />
+                    </div>
+
+                    {/* Bestseller Toggle */}
+                    <div className="flex items-center justify-between p-3 rounded-xl" style={{ ...inputStyle }}>
+                        <div>
+                            <p className="text-sm font-bold" style={{ color: '#1C1C1C' }}>⭐ Mark as Bestseller</p>
+                            <p className="text-xs" style={{ color: '#A0998F' }}>Show in Bestsellers section on homepage</p>
+                        </div>
+                        <button
+                            type="button"
+                            onClick={() => setForm({ ...form, isBestseller: !form.isBestseller })}
+                            className={`relative w-12 h-7 rounded-full transition-colors ${form.isBestseller ? 'bg-orange-500' : 'bg-gray-300'}`}
+                        >
+                            <div className={`absolute top-0.5 w-6 h-6 bg-white rounded-full shadow transition-transform ${form.isBestseller ? 'translate-x-5' : 'translate-x-0.5'}`}></div>
+                        </button>
                     </div>
 
                     {/* Sizes */}

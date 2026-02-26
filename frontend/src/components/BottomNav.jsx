@@ -7,7 +7,7 @@ const BottomNav = () => {
     const location = useLocation();
 
     // Don't show on specific pages
-    const hiddenPaths = ['/', '/login', '/signup', '/admin', '/payment'];
+    const hiddenPaths = ['/', '/login', '/signup', '/admin', '/payment', '/cart'];
     if (hiddenPaths.some(path => location.pathname === path || location.pathname.startsWith('/admin'))) {
         return null;
     }
