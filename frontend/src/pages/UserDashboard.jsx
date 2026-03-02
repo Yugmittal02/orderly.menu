@@ -91,11 +91,13 @@ const UserDashboard = () => {
                         <FaArrowLeft size={16} color="#FFFFFF" />
                     </button>
                     <h1 className="text-lg font-bold text-white">My Account</h1>
-                    <button onClick={() => navigate('/notifications')}
+                    <button onClick={() => { const el = document.getElementById('recent-orders-section'); if (el) el.scrollIntoView({ behavior: 'smooth' }); }}
                         className="w-10 h-10 rounded-full flex items-center justify-center relative transition-all active:scale-90"
                         style={{ background: 'rgba(255,255,255,0.1)', backdropFilter: 'blur(10px)' }}>
                         <FaBell size={15} color="#F9FAFB" />
+                        {orders.length > 0 && (
                         <span className="absolute top-2 right-2.5 w-2 h-2 rounded-full bg-red-500 ring-2 ring-[#2D1F16]"></span>
+                        )}
                     </button>
                 </div>
 

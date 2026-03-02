@@ -14,7 +14,7 @@ const Cart = () => {
   const { customer } = useAuth();
   const [orderType, setOrderType] = useState('Delivery');
   const [selectedAddressIndex, setSelectedAddressIndex] = useState(0);
-  const [feeSettings, setFeeSettings] = useState({ deliveryFeeBase: 30, freeDeliveryThreshold: 299 });
+  const [feeSettings, setFeeSettings] = useState({ deliveryFeeBase: 30, freeDeliveryThreshold: 500 });
   const [couponCode, setCouponCode] = useState('');
   const [couponLoading, setCouponLoading] = useState(false);
   const [couponError, setCouponError] = useState('');
@@ -353,8 +353,8 @@ const Cart = () => {
         </div>
       </div>
 
-      {/* Checkout Button - Fixed Bottom */}
-      <div className="fixed bottom-0 left-0 right-0 p-4 z-20"
+      {/* Checkout Button - Fixed Bottom, above BottomNav */}
+      <div className="fixed bottom-16 md:bottom-0 left-0 right-0 p-4 z-[60]"
         style={{ background: 'linear-gradient(180deg, transparent 0%, #FFFFFF 20%, #FFFFFF 100%)' }}>
         <button
           onClick={handleCheckout}

@@ -308,7 +308,7 @@ const Payment = () => {
             quantity: itemQty,
             size: item.size,
             addons: item.selectedAddons,
-            price: itemPrice * itemQty,
+            price: itemPrice, // Per-unit price — backend/receipt calculates total as price * quantity
           };
         }),
         totalAmount: grandTotal,
