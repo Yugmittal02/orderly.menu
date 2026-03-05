@@ -24,6 +24,8 @@ export const adminLogin = (data) => API.post("/auth/admin/login", data);
 // Products
 export const fetchProducts = (category) =>
   API.get(`/products${category ? `?category=${category}` : ""}`);
+export const fetchProductBySlug = (slug) =>
+  API.get(`/products/slug/${slug}`);
 export const createProduct = (data) => API.post("/products", data);
 export const updateProduct = (id, data) => API.put(`/products/${id}`, data);
 export const deleteProduct = (id) => API.delete(`/products/${id}`);

@@ -1,16 +1,19 @@
 import React, { useState, useCallback, useMemo, memo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import { FaPlus, FaStar, FaCheck } from 'react-icons/fa';
 import BottomSheetCustomizer from './BottomSheetCustomizer';
 
 const ProductCard = memo(({ product, onAddSuccess }) => {
     const { addToCart } = useCart();
+    const navigate = useNavigate();
     const [showCustomize, setShowCustomize] = useState(false);
     const [added, setAdded] = useState(false);
     
     // Defensive checks for product properties
     const safeProduct = useMemo(() => ({
         _id: product?._id || '',
+        slug: product?.slug || '',
         name: product?.name || 'Unnamed Product',
         description: product?.description || '',
         basePrice: Number(product?.basePrice) || 0,
@@ -30,7 +33,8 @@ const ProductCard = memo(({ product, onAddSuccess }) => {
     const isDoubleCheese = safeProduct.name?.toLowerCase().includes('double cheese');
     const isRepublicDayOffer = isPizzaPaneer || isDoubleCheese;
     
-    const handleAdd = useCallback(() => {
+    const handleAdd = useCallback((e) => {
+        e?.stopPropagation();
         if (!safeProduct.isAvailable) return;
         
         if (hasOptions) {
@@ -60,7 +64,7 @@ const ProductCard = memo(({ product, onAddSuccess }) => {
 
     return (
         <>
-            <div className={`rounded-3xl shadow-sm overflow-hidden transition-all active:scale-[0.98] ${
+            <div onClick={() => navigate(`/product/${safeProduct.slug || safeProduct._id}`)} className={`rounded-3xl shadow-sm overflow-hidden transition-all active:scale-[0.98] cursor-pointer ${
                 !safeProduct.isAvailable ? 'opacity-60' : ''
             } ${
                 isRepublicDayOffer 

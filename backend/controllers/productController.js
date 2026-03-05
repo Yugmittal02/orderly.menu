@@ -47,6 +47,28 @@ exports.getProductById = async (req, res) => {
     }
 };
 
+exports.getProductBySlug = async (req, res) => {
+    try {
+        const product = await Product.findOne({ slug: req.params.slug })
+            .populate('category', 'name slug icon colorFrom colorTo');
+        if (!product) return res.status(404).json({ message: 'Product not found' });
+
+        // Fetch related products from the same category
+        const related = await Product.find({
+            category: product.category?._id,
+            _id: { $ne: product._id },
+            isAvailable: true
+        })
+            .populate('category', 'name slug icon colorFrom colorTo')
+            .limit(8)
+            .sort({ isBestseller: -1, rating: -1 });
+
+        res.json({ product, relatedProducts: related });
+    } catch (error) {
+        res.status(500).json({ message: 'Error fetching product', error: error.message });
+    }
+};
+
 exports.createProduct = async (req, res) => {
     try {
         const productData = { ...req.body };

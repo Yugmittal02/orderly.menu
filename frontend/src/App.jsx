@@ -26,6 +26,7 @@ const ShippingPolicy = lazy(() => import('./pages/ShippingPolicy'));
 const ContactUs = lazy(() => import('./pages/ContactUs'));
 const CategoryPage = lazy(() => import('./pages/CategoryPage'));
 const Categories = lazy(() => import('./pages/Categories'));
+const ProductDetail = lazy(() => import('./pages/ProductDetail'));
 
 // Protected Route for Admin
 const AdminRoute = ({ children }) => {
@@ -52,6 +53,7 @@ const App = () => {
                                 <Route path="/dashboard" element={<UserDashboard />} />
                                 <Route path="/categories" element={<Categories />} />
                                 <Route path="/category/:categoryId" element={<CategoryPage />} />
+                                <Route path="/product/:slug" element={<ProductDetail />} />
                                 <Route path="/login" element={<Login />} />
 
                                 {/* Static Pages */}

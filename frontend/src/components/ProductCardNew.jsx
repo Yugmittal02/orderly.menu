@@ -1,4 +1,5 @@
 import React, { useState, useMemo, memo, useCallback, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { FaHeart, FaRegHeart, FaCheck } from 'react-icons/fa';
 import { useCart } from '../context/CartContext';
 import BottomSheetCustomizer from './BottomSheetCustomizer';
@@ -9,9 +10,11 @@ const ProductCardNew = memo(({ product, onAddSuccess, index = 0, featured = fals
     const [isWishlisted, setIsWishlisted] = useState(false);
     const [showCustomize, setShowCustomize] = useState(false);
     const addBtnRef = useRef(null);
+    const navigate = useNavigate();
 
     const safeProduct = useMemo(() => ({
         _id: product?._id || '',
+        slug: product?.slug || '',
         name: product?.name || 'Product',
         price: Number(product?.price || product?.basePrice) || 0,
         basePrice: Number(product?.basePrice || product?.price) || 0,
@@ -73,7 +76,8 @@ const ProductCardNew = memo(({ product, onAddSuccess, index = 0, featured = fals
     return (
         <>
         <div
-            className={`group relative bg-white rounded-2xl overflow-hidden transition-all duration-300 ${!safeProduct.isAvailable ? 'opacity-60' : 'hover:shadow-lg active:scale-[0.98]'}`}
+            onClick={() => navigate(`/product/${safeProduct.slug || safeProduct._id}`)}
+            className={`group relative bg-white rounded-2xl overflow-hidden transition-all duration-300 cursor-pointer ${!safeProduct.isAvailable ? 'opacity-60' : 'hover:shadow-lg active:scale-[0.98]'}`}
             style={{
                 border: '1px solid #f0f0f0',
                 boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
