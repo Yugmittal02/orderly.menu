@@ -119,9 +119,6 @@ export const useRazorpay = () => {
             escape: false,
             animation: true,
           },
-          // Callback URL for redirect-based payments (UPI intent)
-          callback_url: `${window.location.origin}/order-success?orderId=${data.orderId}&razorpay_order_id=${data.razorpayOrderId}`,
-          redirect: false, // Keep in same page, handle via handler
           handler: async function (response) {
             try {
               // Verify payment on backend
