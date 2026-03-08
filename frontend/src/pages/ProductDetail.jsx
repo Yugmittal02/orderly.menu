@@ -607,7 +607,7 @@ const ProductDetail = () => {
                 .pd-page-container {
                     background: #FFFFFF;
                     min-height: 100vh;
-                    padding-bottom: 100px; /* Mobile sticky bar allowance */
+                    padding-bottom: 140px; /* Mobile sticky bar + bottom nav allowance */
                     font-family: 'Inter', system-ui, sans-serif;
                 }
                 
@@ -661,13 +661,15 @@ const ProductDetail = () => {
                     display: flex; flex-direction: column;
                 }
                 
-                .pd-left-column { width: 100%; }
+                .pd-left-column { width: 100%; padding: 12px 16px; }
                 .pd-right-column { width: 100%; }
                 
                 .pd-image-container {
-                    width: 100%; aspect-ratio: 1/1; position: relative;
+                    width: 100%; aspect-ratio: 4/3; max-height: 42vh; position: relative;
                     background: linear-gradient(135deg, #F5EDE6 0%, #E8DFD6 100%);
                     overflow: hidden;
+                    border-radius: 16px;
+                    border: 1px solid #E8E3DB;
                 }
 
                 .pd-info-block { padding: 20px 16px 0; }
@@ -692,7 +694,7 @@ const ProductDetail = () => {
 
                 /* Cart Actions */
                 .pd-mobile-bottom-bar {
-                    position: fixed; bottom: 0; left: 0; right: 0; z-index: 40;
+                    position: fixed; bottom: 64px; left: 0; right: 0; z-index: 40;
                     background: #FFFFFF; border-top: 1px solid #F0ECE6; padding: 12px 16px;
                     padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px));
                     box-shadow: 0 -4px 20px rgba(0,0,0,0.06);
@@ -742,6 +744,8 @@ const ProductDetail = () => {
                     .pd-image-container {
                         border-radius: 24px;
                         border: 1px solid #F0ECE6;
+                        aspect-ratio: 1/1;
+                        max-height: none;
                     }
 
                     .pd-right-column {

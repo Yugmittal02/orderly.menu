@@ -89,7 +89,11 @@ export const AuthProvider = ({ children }) => {
             return { success: true };
         } catch (error) {
             console.error('Customer login failed:', error);
-            return { success: false, message: error.response?.data?.message || 'Login failed' };
+            const errData = error.response?.data;
+            const message = errData?.errors?.length
+                ? errData.errors.join(', ')
+                : errData?.message || 'Login failed';
+            return { success: false, message };
         }
     };
 

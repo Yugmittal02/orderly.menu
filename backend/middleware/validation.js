@@ -18,7 +18,7 @@ const validateCustomer = [
         .trim()
         .notEmpty().withMessage('Name is required')
         .isLength({ min: 2, max: 50 }).withMessage('Name must be 2-50 characters')
-        .matches(/^[a-zA-Z\s]+$/).withMessage('Name can only contain letters'),
+        .matches(/^[\p{L}\s.'-]+$/u).withMessage('Name contains invalid characters'),
     body('phone')
         .trim()
         .notEmpty().withMessage('Phone is required')

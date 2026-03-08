@@ -11,6 +11,7 @@ const Login = () => {
     const location = useLocation();
     const [loading, setLoading] = useState(false);
     const [step, setStep] = useState(1); // 1: Intro/Phone, 2: Name (if new)
+    const [formError, setFormError] = useState('');
     const { customer } = useAuth();
 
     useEffect(() => {
@@ -24,20 +25,38 @@ const Login = () => {
         e.preventDefault();
         setLoading(true);
 
+        // Client-side validation
+        const trimmedName = name.trim();
+        const trimmedPhone = phone.trim();
+
+        if (!trimmedName || trimmedName.length < 2) {
+            setFormError('Please enter a valid name (at least 2 characters)');
+            setLoading(false);
+            return;
+        }
+        if (!/^[\p{L}\s.'-]+$/u.test(trimmedName)) {
+            setFormError('Name contains invalid characters');
+            setLoading(false);
+            return;
+        }
+        if (!/^[6-9]\d{9}$/.test(trimmedPhone)) {
+            setFormError('Please enter a valid 10-digit mobile number (starting with 6-9)');
+            setLoading(false);
+            return;
+        }
+
         try {
-            // enterAsCustomer handles both login and registration in the backend
-            // It searches by phone, if exists -> logs in, if not -> creates new
-            const res = await enterAsCustomer(name, phone);
+            const res = await enterAsCustomer(trimmedName, trimmedPhone);
 
             if (res.success) {
                 const from = location.state?.from || '/dashboard';
                 navigate(from, { replace: true });
             } else {
-                alert(res.message);
+                setFormError(res.message);
             }
         } catch (err) {
             console.error(err);
-            alert("Something went wrong. Please try again.");
+            setFormError('Something went wrong. Please try again.');
         } finally {
             setLoading(false);
         }
@@ -114,6 +133,12 @@ const Login = () => {
                         </div>
 
                         <form onSubmit={handleSubmit} className="space-y-6">
+
+                            {formError && (
+                                <div className="bg-red-50 text-red-600 font-medium px-4 py-3 rounded-xl text-center text-sm border border-red-100">
+                                    {formError}
+                                </div>
+                            )}
 
                             <div className="space-y-2">
                                 <label className="text-xs font-bold uppercase text-[#8B7355] ml-1">Your Name</label>

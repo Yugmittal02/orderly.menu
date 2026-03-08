@@ -16,9 +16,9 @@ const CustomerEntry = ({ onClose }) => {
             return;
         }
 
-        // Validate Name (letters only)
-        if (!/^[a-zA-Z\s]+$/.test(name.trim())) {
-            setError('Name should only contain letters');
+        // Validate Name (letters, Hindi, spaces, dots, hyphens)
+        if (!/^[\p{L}\s.'-]+$/u.test(name.trim())) {
+            setError('Name contains invalid characters');
             return;
         }
         

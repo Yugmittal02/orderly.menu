@@ -25,7 +25,7 @@ const AdsBanner = () => {
             description: 'Order Now & Get 10% OFF',
             image: 'https://images.unsplash.com/photo-1621303837174-89787a7d4729?w=600&h=400&fit=crop&q=80',
             bgGradient: gradients[0],
-            link: '/category/cake',
+            link: '/category/cakes',
             badge: '🔥 HOT',
             icon: '🎂'
         },
@@ -36,7 +36,7 @@ const AdsBanner = () => {
             description: 'Custom Cakes Available',
             image: 'https://images.unsplash.com/photo-1535254973040-607b474cb50d?w=600&h=400&fit=crop&q=80',
             bgGradient: gradients[1],
-            link: '/category/cake',
+            link: '/category/cakes',
             badge: '🎉 SPECIAL',
             icon: '🎁'
         },
