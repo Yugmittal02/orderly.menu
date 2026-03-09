@@ -431,13 +431,13 @@ const ProductDetail = () => {
                             )}
 
                             {/* Name */}
-                            <h1 style={{ fontSize: 28, fontWeight: 800, color: '#1C1C1C', margin: 0, lineHeight: 1.3 }}>
+                            <h1 style={{ fontSize: 20, fontWeight: 800, color: '#1C1C1C', margin: 0, lineHeight: 1.25 }}>
                                 {safeProduct.name}
                             </h1>
 
                             {/* Price */}
-                            <div style={{ marginTop: 12, display: 'flex', alignItems: 'baseline', gap: 8 }}>
-                                <span style={{ fontSize: 32, fontWeight: 800, color: '#2D1810' }}>₹{unitPrice}</span>
+                            <div style={{ marginTop: 6, display: 'flex', alignItems: 'baseline', gap: 8 }}>
+                                <span style={{ fontSize: 22, fontWeight: 800, color: '#2D1810' }}>₹{unitPrice}</span>
                                 {safeProduct.basePrice !== unitPrice && (
                                     <span style={{ fontSize: 16, color: '#AAA', textDecoration: 'line-through' }}>
                                         ₹{safeProduct.basePrice}
@@ -675,21 +675,21 @@ const ProductDetail = () => {
                     display: flex; flex-direction: column;
                 }
                 
-                .pd-left-column { width: 100%; padding: 12px 16px; }
+                .pd-left-column { width: 100%; padding: 6px 16px; }
                 .pd-right-column { width: 100%; }
                 
                 .pd-image-container {
-                    width: 100%; aspect-ratio: 4/3; max-height: 42vh; position: relative;
+                    width: 100%; aspect-ratio: 4/3; max-height: 24vh; position: relative;
                     background: linear-gradient(135deg, #F5EDE6 0%, #E8DFD6 100%);
                     overflow: hidden;
-                    border-radius: 16px;
+                    border-radius: 14px;
                     border: 1px solid #E8E3DB;
                 }
 
-                .pd-info-block { padding: 20px 16px 0; }
+                .pd-info-block { padding: 8px 16px 0; }
                 .pd-section-divider {
-                    padding: 16px 16px 0;
-                    margin-top: 16px;
+                    padding: 10px 16px 0;
+                    margin-top: 10px;
                     border-top: 1px solid #F0ECE6;
                 }
 
