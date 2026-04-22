@@ -25,6 +25,7 @@ import {
   acceptOrder,
   getStoreSettings,
   updateStoreSettings,
+  resetAllOrders,
 } from "../services/api";
 
 import { playOrderSound } from "../services/notificationSound";
@@ -320,6 +321,22 @@ const AdminDashboard = () => {
   };
 
   // ═══════════════════════════════════════════
+  // RESET DATA (Orders + Stats)
+  // ═══════════════════════════════════════════
+
+  const handleResetData = async (password) => {
+    const { data } = await resetAllOrders(password);
+    // Clear local state so UI reflects the reset immediately
+    setOrders([]);
+    prevOrderCountRef.current = 0;
+    isFirstLoadRef.current = true;
+    toast.success(
+      `Cleared ${data.deleted.orders} orders & ${data.deleted.ratings} ratings`,
+      { icon: '🗑️', duration: 4000 }
+    );
+  };
+
+  // ═══════════════════════════════════════════
   // PIN LOCK
   // ═══════════════════════════════════════════
 
@@ -389,10 +406,10 @@ const AdminDashboard = () => {
             {showInstallPrompt && (
               <button
                 onClick={handleInstallClick}
-                className="px-3 py-1.5 rounded-xl text-xs font-bold text-white shadow-md active:scale-95 transition-all flex items-center justify-center gap-1.5 hidden md:flex"
-                style={{ background: 'linear-gradient(135deg, #1C1C1C, #3F3F3F)' }}
+                className="px-3 py-1.5 rounded-xl text-xs font-bold text-white shadow-md active:scale-95 transition-all flex items-center justify-center gap-1.5 animate-pulse"
+                style={{ background: 'linear-gradient(135deg, #C97B4B, #E8956A)', boxShadow: '0 4px 16px rgba(201,123,75,0.4)' }}
               >
-                 📱 Install App
+                 📲 Install Admin
               </button>
             )}
 
@@ -474,6 +491,7 @@ const AdminDashboard = () => {
             storeSettings={storeSettings}
             setStoreSettings={setStoreSettings}
             onUpdateStore={handleUpdateStore}
+            onResetData={handleResetData}
           />
         )
       )}

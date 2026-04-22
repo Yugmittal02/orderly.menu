@@ -23,6 +23,59 @@ router.put('/:id/screenshot', validateObjectId('id'), orderController.uploadPaym
 // Admin: Verify payment screenshot
 router.put('/:id/verify-payment', verifyToken, isAdmin, validateObjectId('id'), orderController.verifyPaymentScreenshot);
 
+// ═══════════════════════════════════════════
+// RESET ALL ORDERS & STATS (Admin only, password-protected)
+// Deletes: Orders, Ratings
+// Does NOT touch: Products, Categories, Settings, Users, Offers
+// ═══════════════════════════════════════════
+router.delete('/reset-all', verifyToken, isAdmin, async (req, res) => {
+  try {
+    const { password } = req.body;
+
+    if (!password) {
+      return res.status(400).json({ message: 'Settings password is required for this action' });
+    }
+
+    // Verify password against store_config settings
+    const Settings = require('../models/Settings');
+    const bcrypt = require('bcryptjs');
+    let settings = await Settings.findOne({ key: 'store_config' });
+
+    if (!settings) {
+      return res.status(500).json({ message: 'Settings not configured' });
+    }
+
+    const isMatch = await bcrypt.compare(password, settings.settingsPassword);
+
+    if (!isMatch) {
+      return res.status(401).json({ message: 'Incorrect settings password' });
+    }
+
+    // Delete all orders and ratings — menu/products/categories are UNTOUCHED
+    const Order = require('../models/Order');
+    const Rating = require('../models/Rating');
+
+    const orderResult = await Order.deleteMany({});
+    const ratingResult = await Rating.deleteMany({});
+
+    // Also clear user activity logs related to orders
+    const User = require('../models/User');
+    await User.updateMany({}, { $set: { activityLog: [] } });
+
+    console.log(`🗑️ RESET: Deleted ${orderResult.deletedCount} orders, ${ratingResult.deletedCount} ratings`);
+
+    res.json({
+      message: 'All order data has been cleared successfully',
+      deleted: {
+        orders: orderResult.deletedCount,
+        ratings: ratingResult.deletedCount,
+      },
+      preserved: ['Products', 'Categories', 'Settings', 'Offers', 'User Accounts']
+    });
+  } catch (error) {
+    console.error('Error resetting order data:', error);
+    res.status(500).json({ message: 'Failed to reset data' });
+  }
+});
+
 module.exports = router;
-
-

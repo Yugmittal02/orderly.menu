@@ -8,11 +8,11 @@
       content="width=device-width, initial-scale=1.0"
     />
 
-    <!-- PWA Meta Tags -->
-    <meta name="theme-color" content="#f97316" />
+    <!-- PWA Meta Tags (dynamically set by script below) -->
+    <meta name="theme-color" content="#f97316" id="pwa-theme-color" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-    <meta name="apple-mobile-web-app-title" content="SewaShubham" />
+    <meta name="apple-mobile-web-app-title" content="SewaShubham" id="pwa-apple-title" />
     <meta name="mobile-web-app-capable" content="yes" />
     
     <!-- Primary SEO Meta Tags -->
@@ -285,12 +285,29 @@
     }
     </script>
 
-    <!-- PWA Manifest -->
-    <link rel="manifest" href="/manifest.json" />
+    <!-- PWA Manifest (dynamically selected based on path) -->
+    <link rel="manifest" href="/manifest.json" id="pwa-manifest" />
 
-    <!-- Apple Touch Icons -->
-    <link rel="apple-touch-icon" sizes="192x192" href="/icons/icon-192.png" />
-    <link rel="apple-touch-icon" sizes="512x512" href="/icons/icon-512.png" />
+    <!-- Apple Touch Icons (dynamically selected based on path) -->
+    <link rel="apple-touch-icon" sizes="192x192" href="/icons/icon-192.png" id="pwa-apple-icon-192" />
+    <link rel="apple-touch-icon" sizes="512x512" href="/icons/icon-512.png" id="pwa-apple-icon-512" />
+
+    <!-- Dynamic PWA Manifest & Icon Switching -->
+    <script>
+      (function() {
+        var isAdmin = window.location.pathname.startsWith('/admin');
+        if (isAdmin) {
+          document.getElementById('pwa-manifest').setAttribute('href', '/manifest-admin.json');
+          document.getElementById('pwa-theme-color').setAttribute('content', '#C97B4B');
+          document.getElementById('pwa-apple-title').setAttribute('content', 'SS Admin');
+          document.getElementById('pwa-apple-icon-192').setAttribute('href', '/icons/admin-icon-192.png');
+          document.getElementById('pwa-apple-icon-512').setAttribute('href', '/icons/admin-icon-512.png');
+          // Also update favicon for admin
+          var favicon = document.querySelector('link[rel="icon"]');
+          if (favicon) favicon.setAttribute('href', '/icons/admin-icon-192.png');
+        }
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>
@@ -308,11 +325,15 @@
         window.location.reload();
       });
 
-      // Service Worker Registration
+      // Service Worker Registration (path-aware: admin vs website)
       if ("serviceWorker" in navigator) {
         window.addEventListener("load", () => {
+          var isAdminPath = window.location.pathname.startsWith('/admin');
+          var swFile = isAdminPath ? '/sw-admin.js' : '/sw.js';
+          var swScope = isAdminPath ? '/admin/' : '/';
+
           navigator.serviceWorker
-            .register("/sw.js")
+            .register(swFile, { scope: swScope })
             .then((registration) => {
               // Check for SW updates on every page load
               registration.update();

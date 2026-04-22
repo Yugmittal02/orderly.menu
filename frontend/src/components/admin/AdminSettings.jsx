@@ -1,12 +1,20 @@
 import React, { useState, useEffect } from 'react';
-import { FaStore, FaToggleOn, FaToggleOff, FaLock, FaSave, FaChevronDown, FaChevronUp, FaAddressCard } from 'react-icons/fa';
+import { FaStore, FaToggleOn, FaToggleOff, FaLock, FaSave, FaChevronDown, FaChevronUp, FaAddressCard, FaExclamationTriangle } from 'react-icons/fa';
 import { getHomepageBadges, updateHomepageBadges } from '../../services/api';
 
 const AdminSettings = ({
     storeSettings,
     setStoreSettings,
     onUpdateStore,
+    onResetData,
 }) => {
+    // Reset data state
+    const [showResetModal, setShowResetModal] = useState(false);
+    const [resetStep, setResetStep] = useState(1); // 1 = confirm, 2 = type text, 3 = password
+    const [resetConfirmText, setResetConfirmText] = useState('');
+    const [resetPassword, setResetPassword] = useState('');
+    const [resetLoading, setResetLoading] = useState(false);
+    const [resetError, setResetError] = useState('');
     // Homepage Badges state
     const [badges, setBadges] = useState([]);
     const [badgesOpen, setBadgesOpen] = useState(false);
@@ -272,6 +280,178 @@ const AdminSettings = ({
                     </div>
                 </div>
             </div>
+
+            {/* ═══════════════════════════════════════════ */}
+            {/* DANGER ZONE — Reset Orders & Stats */}
+            {/* ═══════════════════════════════════════════ */}
+            <div className="p-5 rounded-2xl"
+                style={{ background: '#FFFFFF', border: '2px solid #FCA5A5', boxShadow: '0 2px 8px rgba(220,38,38,0.08)' }}>
+                <div className="flex items-center gap-3 mb-4">
+                    <div className="w-10 h-10 rounded-xl flex items-center justify-center"
+                        style={{ background: '#FEE2E2', color: '#DC2626' }}>
+                        <FaExclamationTriangle />
+                    </div>
+                    <div className="flex-1">
+                        <h3 className="font-bold" style={{ color: '#DC2626' }}>Danger Zone</h3>
+                        <p className="text-xs" style={{ color: '#A0998F' }}>Reset all orders & stats data to start fresh</p>
+                    </div>
+                </div>
+
+                <div className="p-4 rounded-xl mb-4"
+                    style={{ background: '#FEF2F2', border: '1px solid #FECACA' }}>
+                    <p className="text-xs font-semibold mb-2" style={{ color: '#991B1B' }}>⚠️ This will permanently delete:</p>
+                    <ul className="text-xs space-y-1 ml-4" style={{ color: '#991B1B', listStyle: 'disc' }}>
+                        <li>All orders history</li>
+                        <li>All customer ratings & reviews</li>
+                        <li>Revenue & stats data</li>
+                        <li>User activity logs</li>
+                    </ul>
+                    <p className="text-xs font-bold mt-3" style={{ color: '#16A34A' }}>✅ Menu items, categories, offers & settings will NOT be affected</p>
+                </div>
+
+                <button
+                    onClick={() => { setShowResetModal(true); setResetStep(1); setResetConfirmText(''); setResetPassword(''); setResetError(''); }}
+                    className="w-full py-3 font-bold rounded-xl active:scale-[0.98] transition-all"
+                    style={{ background: '#FFFFFF', color: '#DC2626', border: '2px solid #DC2626' }}
+                >
+                    🗑️ Reset All Orders & Stats
+                </button>
+            </div>
+
+            {/* ═══════════════════════════════════════════ */}
+            {/* RESET CONFIRMATION MODAL — Triple check */}
+            {/* ═══════════════════════════════════════════ */}
+            {showResetModal && (
+                <div className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+                    <div className="bg-white rounded-3xl p-6 max-w-sm w-full shadow-2xl">
+
+                        {/* Step 1: First Confirmation */}
+                        {resetStep === 1 && (
+                            <div className="text-center">
+                                <div className="w-16 h-16 mx-auto rounded-full flex items-center justify-center mb-4"
+                                    style={{ background: '#FEE2E2' }}>
+                                    <span className="text-3xl">⚠️</span>
+                                </div>
+                                <h3 className="text-xl font-bold mb-2" style={{ color: '#DC2626' }}>Are you sure?</h3>
+                                <p className="text-sm mb-1" style={{ color: '#7E7E7E' }}>This will permanently erase:</p>
+                                <div className="p-3 rounded-xl mb-4 text-left" style={{ background: '#FEF2F2' }}>
+                                    <p className="text-xs font-semibold" style={{ color: '#991B1B' }}>• All orders • All ratings • Revenue data • Activity logs</p>
+                                </div>
+                                <p className="text-xs font-bold mb-4" style={{ color: '#16A34A' }}>
+                                    ✅ Your menu items & settings are 100% safe
+                                </p>
+                                <div className="flex gap-3">
+                                    <button onClick={() => setShowResetModal(false)}
+                                        className="flex-1 py-3 font-bold rounded-xl"
+                                        style={{ background: '#FAF7F2', color: '#7E7E7E', border: '2px solid #E8E3DB' }}>
+                                        Cancel
+                                    </button>
+                                    <button onClick={() => setResetStep(2)}
+                                        className="flex-1 py-3 font-bold rounded-xl text-white"
+                                        style={{ background: '#DC2626', boxShadow: '0 4px 12px rgba(220,38,38,0.3)' }}>
+                                        Yes, Continue
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Step 2: Type RESET to confirm */}
+                        {resetStep === 2 && (
+                            <div className="text-center">
+                                <div className="w-16 h-16 mx-auto rounded-full flex items-center justify-center mb-4"
+                                    style={{ background: '#FEF3C7' }}>
+                                    <span className="text-3xl">✍️</span>
+                                </div>
+                                <h3 className="text-lg font-bold mb-2" style={{ color: '#1C1C1C' }}>Type <span style={{ color: '#DC2626', fontFamily: 'monospace' }}>RESET</span> to confirm</h3>
+                                <p className="text-xs mb-4" style={{ color: '#7E7E7E' }}>This action cannot be undone</p>
+                                <input
+                                    type="text"
+                                    value={resetConfirmText}
+                                    onChange={(e) => setResetConfirmText(e.target.value.toUpperCase())}
+                                    placeholder="Type RESET here"
+                                    className="w-full px-4 py-3 rounded-xl text-center text-lg font-bold mb-4 outline-none"
+                                    style={{ background: '#FAF7F2', border: '2px solid #E8E3DB', color: '#1C1C1C', letterSpacing: 4 }}
+                                    autoFocus
+                                />
+                                <div className="flex gap-3">
+                                    <button onClick={() => { setResetStep(1); setResetConfirmText(''); }}
+                                        className="flex-1 py-3 font-bold rounded-xl"
+                                        style={{ background: '#FAF7F2', color: '#7E7E7E', border: '2px solid #E8E3DB' }}>
+                                        Back
+                                    </button>
+                                    <button
+                                        onClick={() => resetConfirmText === 'RESET' && setResetStep(3)}
+                                        disabled={resetConfirmText !== 'RESET'}
+                                        className="flex-1 py-3 font-bold rounded-xl text-white transition-all"
+                                        style={{
+                                            background: resetConfirmText === 'RESET' ? '#DC2626' : '#E8E3DB',
+                                            boxShadow: resetConfirmText === 'RESET' ? '0 4px 12px rgba(220,38,38,0.3)' : 'none',
+                                            cursor: resetConfirmText === 'RESET' ? 'pointer' : 'not-allowed'
+                                        }}>
+                                        Next
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Step 3: Enter Settings Password */}
+                        {resetStep === 3 && (
+                            <div className="text-center">
+                                <div className="w-16 h-16 mx-auto rounded-full flex items-center justify-center mb-4"
+                                    style={{ background: '#FEE2E2' }}>
+                                    <FaLock size={24} color="#DC2626" />
+                                </div>
+                                <h3 className="text-lg font-bold mb-2" style={{ color: '#1C1C1C' }}>Enter Settings Password</h3>
+                                <p className="text-xs mb-4" style={{ color: '#7E7E7E' }}>Final verification before reset</p>
+                                <input
+                                    type="password"
+                                    value={resetPassword}
+                                    onChange={(e) => { setResetPassword(e.target.value); setResetError(''); }}
+                                    placeholder="Settings password"
+                                    className="w-full px-4 py-3 rounded-xl text-center text-sm font-bold mb-2 outline-none"
+                                    style={{ background: '#FAF7F2', border: `2px solid ${resetError ? '#DC2626' : '#E8E3DB'}`, color: '#1C1C1C' }}
+                                    autoFocus
+                                />
+                                {resetError && (
+                                    <p className="text-xs font-bold mb-2" style={{ color: '#DC2626' }}>{resetError}</p>
+                                )}
+                                <div className="flex gap-3 mt-3">
+                                    <button onClick={() => { setResetStep(2); setResetPassword(''); setResetError(''); }}
+                                        className="flex-1 py-3 font-bold rounded-xl"
+                                        style={{ background: '#FAF7F2', color: '#7E7E7E', border: '2px solid #E8E3DB' }}>
+                                        Back
+                                    </button>
+                                    <button
+                                        onClick={async () => {
+                                            if (!resetPassword) { setResetError('Password required'); return; }
+                                            setResetLoading(true);
+                                            setResetError('');
+                                            try {
+                                                await onResetData(resetPassword);
+                                                setShowResetModal(false);
+                                                setResetStep(1);
+                                                setResetPassword('');
+                                                setResetConfirmText('');
+                                            } catch (err) {
+                                                setResetError(err.response?.data?.message || 'Reset failed');
+                                            }
+                                            setResetLoading(false);
+                                        }}
+                                        disabled={resetLoading || !resetPassword}
+                                        className="flex-1 py-3 font-bold rounded-xl text-white transition-all active:scale-[0.98]"
+                                        style={{
+                                            background: resetPassword ? '#DC2626' : '#E8E3DB',
+                                            boxShadow: resetPassword ? '0 4px 12px rgba(220,38,38,0.3)' : 'none',
+                                            cursor: resetPassword ? 'pointer' : 'not-allowed'
+                                        }}>
+                                        {resetLoading ? '⏳ Resetting...' : '🗑️ Reset Now'}
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

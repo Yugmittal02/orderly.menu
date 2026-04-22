@@ -62,7 +62,8 @@ export const updateOrderStatus = (id, status) =>
   API.put(`/orders/${id}/status`, { status });
 export const acceptOrder = (id) => API.put(`/orders/${id}/accept`);
 export const cancelOrder = (id) => API.put(`/orders/${id}/cancel`);
-
+export const resetAllOrders = (password) =>
+  API.delete("/orders/reset-all", { data: { password } });
 
 // Ratings
 export const submitRating = (data) => API.post("/ratings", data);

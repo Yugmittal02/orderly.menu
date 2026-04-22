@@ -6,6 +6,7 @@ import LoadingSpinner from './components/LoadingSpinner';
 import CookieConsent from './components/CookieConsent';
 import BottomNav from './components/BottomNav';
 import ErrorBoundary from './components/ErrorBoundary';
+import PWAInstallBanner from './components/PWAInstallBanner';
 
 // Keep Welcome static for instant landing page load
 import Welcome from './pages/Welcome';
@@ -91,6 +92,7 @@ const App = () => {
                             </Routes>
                         </div>
                         <BottomNav />
+                        <PWAInstallBanner />
                         <CookieConsent />
                     </Suspense>
                     </Router>

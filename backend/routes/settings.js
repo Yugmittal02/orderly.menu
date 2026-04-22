@@ -4,7 +4,7 @@ const Settings = require('../models/Settings');
 const bcrypt = require('bcryptjs');
 
 // Default settings password (should be changed on first setup)
-const DEFAULT_PASSWORD = 'Imperio';
+const DEFAULT_PASSWORD = '2012';
 
 // Initialize or get settings by key
 const getOrCreateSettings = async (key = 'upi_config') => {

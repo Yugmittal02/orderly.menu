@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { FaLock, FaTimes } from 'react-icons/fa';
 
 const ADMIN_PIN_KEY = 'sewashubham_admin_pin';
-const DEFAULT_PIN = '1234';
+const DEFAULT_PIN = '2012';
 
 /**
  * 4-digit PIN Lock overlay.
@@ -110,11 +110,6 @@ const PinLock = ({ onUnlock, tabName = 'this section' }) => {
                     ❌ {error}
                 </p>
             )}
-
-            {/* Hint */}
-            <p className="text-xs" style={{ color: '#A0998F' }}>
-                Default PIN: 1234
-            </p>
 
             {/* Shake animation */}
             <style>{`

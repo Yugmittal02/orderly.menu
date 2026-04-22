@@ -1,0 +1,44 @@
+{
+  "id": "sewashubham-admin",
+  "name": "SewaShubham Admin Panel",
+  "short_name": "SS Admin",
+  "description": "Admin dashboard for SewaShubham Bakery — manage orders, menu, and store settings",
+  "start_url": "/admin/dashboard",
+  "scope": "/admin",
+  "display": "standalone",
+  "background_color": "#1C1C1C",
+  "theme_color": "#C97B4B",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/icons/admin-icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/admin-icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["business", "productivity"],
+  "shortcuts": [
+    {
+      "name": "Orders",
+      "url": "/admin/dashboard?tab=orders",
+      "icons": [{ "src": "/icons/admin-icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Menu Manager",
+      "url": "/admin/dashboard?tab=menu",
+      "icons": [{ "src": "/icons/admin-icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Settings",
+      "url": "/admin/dashboard?tab=settings",
+      "icons": [{ "src": "/icons/admin-icon-192.png", "sizes": "192x192" }]
+    }
+  ]
+}
