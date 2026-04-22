@@ -357,20 +357,31 @@
         window.location.reload();
       });
 
-      // Service Worker Registration (path-aware: admin vs website)
+      // Service Worker Registration (strictly Admin ONLY)
       if ("serviceWorker" in navigator) {
         window.addEventListener("load", () => {
           var isAdminPath = window.location.pathname.startsWith('/admin');
-          var swFile = isAdminPath ? '/sw-admin.js' : '/sw.js';
-          var swScope = isAdminPath ? '/admin/' : '/';
-
-          navigator.serviceWorker
-            .register(swFile, { scope: swScope })
-            .then((registration) => {
-              // Check for SW updates on every page load
-              registration.update();
-            })
-            .catch(() => {});
+          
+          if (isAdminPath) {
+            // Register Admin Service Worker
+            navigator.serviceWorker
+              .register('/sw-admin.js', { scope: '/admin/' })
+              .then((registration) => {
+                registration.update();
+              })
+              .catch(() => {});
+          } else {
+            // Actively UNREGISTER any existing service workers for the public website
+            // to thoroughly destroy old PWA cache instances and fix iOS launch bugs!
+            navigator.serviceWorker.getRegistrations().then(function(registrations) {
+              for (let registration of registrations) {
+                // If the registration scope isn't strictly admin, blast it
+                if (!registration.scope.includes('/admin/')) {
+                   registration.unregister();
+                }
+              }
+            });
+          }
         });
       }
     </script>
