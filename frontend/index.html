@@ -8,12 +8,8 @@
       content="width=device-width, initial-scale=1.0"
     />
 
-    <!-- PWA Meta Tags (dynamically set by script below) -->
+    <!-- PWA Meta Tags (injected dynamically for Admin ONLY) -->
     <meta name="theme-color" content="#f97316" id="pwa-theme-color" />
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-    <meta name="apple-mobile-web-app-title" content="SewaShubham" id="pwa-apple-title" />
-    <meta name="mobile-web-app-capable" content="yes" />
     
     <!-- Primary SEO Meta Tags -->
     <title>Sewa Shubham Bakery - Best Bakery in Bharatpur | Shubham Pattis | Fresh Cakes & Pastries</title>
@@ -285,24 +281,60 @@
     }
     </script>
 
-    <!-- PWA Manifest (dynamically selected based on path) -->
-    <link rel="manifest" href="/manifest.json" id="pwa-manifest" />
-
-    <!-- Apple Touch Icons (dynamically selected based on path) -->
-    <link rel="apple-touch-icon" sizes="192x192" href="/icons/icon-192.png" id="pwa-apple-icon-192" />
-    <link rel="apple-touch-icon" sizes="512x512" href="/icons/icon-512.png" id="pwa-apple-icon-512" />
-
-    <!-- Dynamic PWA Manifest & Icon Switching -->
+    <!-- Dynamic PWA Manifest & Icon Switching (Admin Only) -->
     <script>
       (function() {
         var isAdmin = window.location.pathname.startsWith('/admin');
+        
         if (isAdmin) {
-          document.getElementById('pwa-manifest').setAttribute('href', '/manifest-admin.json');
-          document.getElementById('pwa-theme-color').setAttribute('content', '#C97B4B');
-          document.getElementById('pwa-apple-title').setAttribute('content', 'SS Admin');
-          document.getElementById('pwa-apple-icon-192').setAttribute('href', '/icons/admin-icon-192.png');
-          document.getElementById('pwa-apple-icon-512').setAttribute('href', '/icons/admin-icon-512.png');
-          // Also update favicon for admin
+          // Inject PWA Manifest strictly for Admin
+          var manifestLink = document.createElement('link');
+          manifestLink.rel = 'manifest';
+          manifestLink.id = 'pwa-manifest';
+          manifestLink.href = '/manifest-admin.json';
+          document.head.appendChild(manifestLink);
+
+          // Inject Apple Web App tags for iOS standalone mode
+          var appleCapable = document.createElement('meta');
+          appleCapable.name = 'apple-mobile-web-app-capable';
+          appleCapable.content = 'yes';
+          document.head.appendChild(appleCapable);
+
+          var appleStatus = document.createElement('meta');
+          appleStatus.name = 'apple-mobile-web-app-status-bar-style';
+          appleStatus.content = 'default';
+          document.head.appendChild(appleStatus);
+
+          var appleTitle = document.createElement('meta');
+          appleTitle.name = 'apple-mobile-web-app-title';
+          appleTitle.content = 'SS Admin';
+          document.head.appendChild(appleTitle);
+
+          var mobileCapable = document.createElement('meta');
+          mobileCapable.name = 'mobile-web-app-capable';
+          mobileCapable.content = 'yes';
+          document.head.appendChild(mobileCapable);
+
+          // Dynamically create apple-touch-icons
+          var icon192 = document.createElement('link');
+          icon192.rel = 'apple-touch-icon';
+          icon192.sizes = '192x192';
+          icon192.id = 'pwa-apple-icon-192';
+          icon192.href = '/icons/admin-icon-192.png';
+          document.head.appendChild(icon192);
+
+          var icon512 = document.createElement('link');
+          icon512.rel = 'apple-touch-icon';
+          icon512.sizes = '512x512';
+          icon512.id = 'pwa-apple-icon-512';
+          icon512.href = '/icons/admin-icon-512.png';
+          document.head.appendChild(icon512);
+
+          // Adjust theme color
+          var themeColor = document.getElementById('pwa-theme-color');
+          if (themeColor) themeColor.setAttribute('content', '#C97B4B');
+
+          // Update favicon
           var favicon = document.querySelector('link[rel="icon"]');
           if (favicon) favicon.setAttribute('href', '/icons/admin-icon-192.png');
         }

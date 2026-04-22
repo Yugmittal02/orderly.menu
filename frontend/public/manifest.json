@@ -3,7 +3,7 @@
   "name": "SewaShubham Bakery",
   "short_name": "SewaShubham",
   "description": "Order delicious food from SewaShubham Bakery — Bharatpur's best bakery since 2002",
-  "start_url": "/",
+  "start_url": "/?app=main",
   "scope": "/",
   "display": "standalone",
   "background_color": "#fff7ed",
