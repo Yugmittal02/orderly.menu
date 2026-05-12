@@ -10,15 +10,45 @@ const API = axios.create({
   baseURL: API_BASE_URL,
 });
 
-// Interceptor to add admin token to requests
+// Admin-only API routes that ALWAYS require admin token (regardless of method)
+const ADMIN_ONLY_ROUTES = [
+  '/orders/all', '/orders/reset-all',
+  '/products/all',
+  '/upload', '/ratings/all',
+  '/settings/upi/admin', '/settings/homepage-badges',
+  '/payments/manual-verify',
+];
+
+// Routes that need admin token only for write operations (POST/PUT/DELETE)
+const ADMIN_WRITE_ROUTES = [
+  '/products', '/categories', '/offers',
+  '/settings/store', '/settings/upi', '/settings/fees',
+  '/settings/change-password',
+];
+
+const isAdminRoute = (url, method) => {
+  // PUT/DELETE on orders (status, accept, verify-payment) are admin routes
+  if (/\/orders\/[a-f0-9]+\/(status|accept|verify-payment)/.test(url)) return true;
+  // Always-admin routes
+  if (ADMIN_ONLY_ROUTES.some(route => url?.includes(route))) return true;
+  // Write-only admin routes (POST, PUT, DELETE, PATCH)
+  if (method !== 'get' && ADMIN_WRITE_ROUTES.some(route => url?.includes(route))) return true;
+  return false;
+};
+
+// Interceptor to add the correct token based on the route
 API.interceptors.request.use((req) => {
   const adminToken = localStorage.getItem("adminToken");
   const customerToken = localStorage.getItem("customerToken");
+  const url = req.url || '';
+  const method = (req.method || 'get').toLowerCase();
 
-  if (adminToken) {
+  if (adminToken && isAdminRoute(url, method)) {
     req.headers.Authorization = `Bearer ${adminToken}`;
   } else if (customerToken) {
     req.headers.Authorization = `Bearer ${customerToken}`;
+  } else if (adminToken) {
+    req.headers.Authorization = `Bearer ${adminToken}`;
   }
   return req;
 });
@@ -27,11 +57,19 @@ API.interceptors.request.use((req) => {
 API.interceptors.response.use(
   (res) => res,
   (error) => {
-    if (error.response?.status === 401 && error.response?.data?.message === 'Invalid Token') {
-      localStorage.removeItem('customerToken');
-      localStorage.removeItem('customer');
-      sessionStorage.removeItem('customer');
-      sessionStorage.removeItem('customerToken');
+    const url = error.config?.url || '';
+    const method = (error.config?.method || 'get').toLowerCase();
+    if (error.response?.status === 401) {
+      if (isAdminRoute(url, method)) {
+        // Stale admin token — clear it so it doesn't block customer routes
+        localStorage.removeItem('adminToken');
+        localStorage.removeItem('admin');
+      } else if (error.response?.data?.message === 'Invalid Token') {
+        localStorage.removeItem('customerToken');
+        localStorage.removeItem('customer');
+        sessionStorage.removeItem('customer');
+        sessionStorage.removeItem('customerToken');
+      }
     }
     return Promise.reject(error);
   }

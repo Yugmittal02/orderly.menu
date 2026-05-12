@@ -10,7 +10,10 @@ import {
     FaPhoneAlt,
     FaTimesCircle,
     FaCreditCard,
-    FaBan
+    FaBan,
+    FaCopy,
+    FaCalendarAlt,
+    FaStickyNote
 } from 'react-icons/fa';
 
 const AdminOrders = ({
@@ -43,6 +46,32 @@ const AdminOrders = ({
         const minutes = Math.floor((new Date() - new Date(createdAt)) / 1000 / 60);
         if (minutes < 1) return "Just now";
         return `${minutes}m ago`;
+    };
+
+    const formatOrderDate = (dateStr) => {
+        const d = new Date(dateStr);
+        const today = new Date();
+        const isToday = d.toDateString() === today.toDateString();
+        const yesterday = new Date(today);
+        yesterday.setDate(yesterday.getDate() - 1);
+        const isYesterday = d.toDateString() === yesterday.toDateString();
+
+        const time = d.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true });
+        
+        if (isToday) return `Today, ${time}`;
+        if (isYesterday) return `Yesterday, ${time}`;
+        return d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) + `, ${time}`;
+    };
+
+    const copyToClipboard = (text) => {
+        navigator.clipboard.writeText(text).then(() => {
+            // Brief visual feedback via a small toast-like effect
+            const el = document.createElement('div');
+            el.textContent = '✅ Copied!';
+            el.style.cssText = 'position:fixed;top:20px;left:50%;transform:translateX(-50%);background:#16A34A;color:#fff;padding:8px 16px;border-radius:12px;font-size:13px;font-weight:700;z-index:9999;animation:fadeIn 0.2s';
+            document.body.appendChild(el);
+            setTimeout(() => el.remove(), 1500);
+        }).catch(() => {});
     };
 
     const filteredOrders = activeStatus === 'All'
@@ -118,10 +147,10 @@ const AdminOrders = ({
                             }}
                         >
                             {/* Header */}
-                            <div className="flex justify-between items-start mb-4">
+                            <div className="flex justify-between items-start mb-3">
                                 <div>
-                                    <div className="flex items-center gap-2">
-                                        <span className="font-black text-lg" style={{ color: '#1C1C1C' }}>#{order._id.slice(-4).toUpperCase()}</span>
+                                    <div className="flex items-center gap-2 flex-wrap">
+                                        <span className="font-black text-lg" style={{ color: '#1C1C1C' }}>#{order._id.slice(-6).toUpperCase()}</span>
                                         {order.status === "Pending" && (
                                             <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider flex items-center gap-1 text-white ${urgency === 'critical' ? 'animate-pulse' : ''
                                                 }`}
@@ -130,8 +159,8 @@ const AdminOrders = ({
                                             </span>
                                         )}
                                     </div>
-                                    <p className="font-semibold text-sm mt-0.5" style={{ color: '#1C1C1C' }}>{order.user?.name}</p>
-                                    <div className="flex items-center gap-2 mt-0.5">
+                                    <p className="font-semibold text-sm mt-0.5" style={{ color: '#1C1C1C' }}>{order.user?.name || 'Guest'}</p>
+                                    <div className="flex items-center gap-2 mt-0.5 flex-wrap">
                                         {order.user?.phone && (
                                             <a href={`tel:${order.user.phone}`}
                                                 className="flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-lg active:scale-95"
@@ -140,6 +169,13 @@ const AdminOrders = ({
                                             </a>
                                         )}
                                         <span className="text-xs" style={{ color: '#A0998F' }}>{order.orderType} • {order.paymentMethod}</span>
+                                    </div>
+                                    {/* Order Date/Time */}
+                                    <div className="flex items-center gap-1.5 mt-1.5">
+                                        <FaCalendarAlt size={10} style={{ color: '#A0998F' }} />
+                                        <span className="text-xs font-medium" style={{ color: '#7E7E7E' }}>
+                                            {formatOrderDate(order.createdAt)}
+                                        </span>
                                     </div>
                                 </div>
                                 <div className="text-right">
@@ -155,16 +191,53 @@ const AdminOrders = ({
                                         }>
                                         {order.paymentStatus === 'Paid' ? '✅ PAID' : order.paymentStatus === 'Initiated' ? '⏳ INITIATED' : order.paymentMethod === 'Cash' ? 'CASH' : 'UNPAID'}
                                     </div>
-                                    {/* Razorpay Payment ID for verified transactions */}
-                                    {order.razorpayPaymentId && (
-                                        <p className="text-[9px] mt-1 font-mono" style={{ color: '#A0998F' }}
-                                            title={order.razorpayPaymentId}>
-                                            <FaCreditCard size={8} className="inline mr-1" />
-                                            {order.razorpayPaymentId.slice(0, 18)}...
-                                        </p>
-                                    )}
                                 </div>
                             </div>
+
+                            {/* Transaction ID — Full, clickable to copy */}
+                            {order.razorpayPaymentId && (
+                                <div className="mb-3 p-2.5 rounded-xl flex items-center justify-between gap-2"
+                                    style={{ background: '#F0FDF4', border: '1px solid #BBF7D0' }}>
+                                    <div className="flex items-center gap-2 min-w-0">
+                                        <FaCreditCard size={12} style={{ color: '#16A34A', flexShrink: 0 }} />
+                                        <span className="text-xs font-mono font-bold truncate" style={{ color: '#166534' }}
+                                            title={order.razorpayPaymentId}>
+                                            {order.razorpayPaymentId}
+                                        </span>
+                                    </div>
+                                    <button
+                                        onClick={() => copyToClipboard(order.razorpayPaymentId)}
+                                        className="p-1.5 rounded-lg active:scale-90 transition-transform flex-shrink-0"
+                                        style={{ background: '#DCFCE7', color: '#16A34A' }}
+                                        title="Copy Transaction ID">
+                                        <FaCopy size={11} />
+                                    </button>
+                                </div>
+                            )}
+
+                            {/* Full Order ID — copyable */}
+                            <div className="mb-3 flex items-center gap-2">
+                                <span className="text-[10px] font-mono" style={{ color: '#A0998F' }}
+                                    title="Full Order ID">ID: {order._id}</span>
+                                <button
+                                    onClick={() => copyToClipboard(order._id)}
+                                    className="p-1 rounded active:scale-90 transition-transform"
+                                    style={{ color: '#A0998F' }}
+                                    title="Copy Order ID">
+                                    <FaCopy size={9} />
+                                </button>
+                            </div>
+
+                            {/* Customer Note */}
+                            {order.customerNote && (
+                                <div className="mb-3 p-3 rounded-xl flex items-start gap-2"
+                                    style={{ background: '#FEF9C3', border: '1px solid #FDE68A' }}>
+                                    <FaStickyNote size={12} style={{ color: '#A16207', marginTop: 2, flexShrink: 0 }} />
+                                    <p className="text-xs font-medium" style={{ color: '#854D0E' }}>
+                                        {order.customerNote}
+                                    </p>
+                                </div>
+                            )}
 
                             {/* Address */}
                             {order.deliveryAddress && (

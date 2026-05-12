@@ -7,7 +7,7 @@ import ProductCardNew from '../components/ProductCardNew';
 import ProductCardSkeleton from '../components/ProductCardSkeleton';
 import SideCart from '../components/SideCart';
 import Footer from '../components/Footer';
-import { FaShoppingBag, FaArrowRight, FaSearch } from 'react-icons/fa';
+import { FaShoppingBag, FaArrowRight, FaSearch, FaTimes } from 'react-icons/fa';
 import { useCart } from '../context/CartContext';
 
 // Skeleton loader is now imported from ProductCardSkeleton
@@ -146,6 +146,11 @@ const Home = () => {
 
     const handleCategoryChange = useCallback((categoryId) => {
         setActiveCategory(categoryId === activeCategory ? '' : categoryId);
+        // Smooth scroll to products section
+        setTimeout(() => {
+            const el = document.querySelector('.all-items-section');
+            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 100);
     }, [activeCategory]);
 
     return (
@@ -169,7 +174,7 @@ const Home = () => {
                         style={{
                             width: '100%',
                             paddingLeft: '44px',
-                            paddingRight: '16px',
+                            paddingRight: searchQuery ? '44px' : '16px',
                             paddingTop: '14px',
                             paddingBottom: '14px',
                             borderRadius: '16px',
@@ -192,6 +197,19 @@ const Home = () => {
                         }}
                     />
                     <FaSearch style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', color: '#C97B4B', fontSize: '15px' }} />
+                    {searchQuery && (
+                        <button
+                            onClick={() => setSearchQuery('')}
+                            style={{
+                                position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)',
+                                width: '28px', height: '28px', borderRadius: '50%', border: 'none',
+                                background: '#F5EAD6', color: '#C97B4B', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                cursor: 'pointer', transition: 'all 0.2s'
+                            }}
+                        >
+                            <FaTimes size={11} />
+                        </button>
+                    )}
                 </div>
             </div>
 
@@ -312,14 +330,29 @@ const Home = () => {
                     ) : filteredProducts.length === 0 ? (
                         <div className="col-span-2 md:col-span-full flex flex-col items-center justify-center py-10 text-center">
                             <p className="text-4xl mb-4">🍰</p>
-                            <p className="text-lg font-bold text-gray-800">No products found</p>
-                            <p className="text-gray-500 mb-4">Try a different category or search term</p>
-                            <button
-                                onClick={() => setActiveCategory('')}
-                                className="px-6 py-2 bg-orange-500 text-white rounded-full font-bold shadow-md active:scale-95 transition-transform"
-                            >
-                                View All Items
-                            </button>
+                            <p className="text-lg font-bold text-gray-800">
+                                {debouncedSearch ? `No results for "${debouncedSearch}"` : 'No products found'}
+                            </p>
+                            <p className="text-gray-500 mb-4">
+                                {debouncedSearch ? 'Try a different spelling or search term' : 'Try a different category'}
+                            </p>
+                            <div className="flex gap-2">
+                                {debouncedSearch && (
+                                    <button
+                                        onClick={() => setSearchQuery('')}
+                                        className="px-6 py-2 bg-white text-orange-500 rounded-full font-bold shadow-md active:scale-95 transition-transform"
+                                        style={{ border: '2px solid #C97B4B' }}
+                                    >
+                                        Clear Search
+                                    </button>
+                                )}
+                                <button
+                                    onClick={() => { setActiveCategory(''); setSearchQuery(''); }}
+                                    className="px-6 py-2 bg-orange-500 text-white rounded-full font-bold shadow-md active:scale-95 transition-transform"
+                                >
+                                    View All Items
+                                </button>
+                            </div>
                         </div>
                     ) : (
                         filteredProducts.map((product, index) => (

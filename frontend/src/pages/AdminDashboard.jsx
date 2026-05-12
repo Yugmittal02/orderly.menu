@@ -197,7 +197,7 @@ const AdminDashboard = () => {
   };
 
   // ═══════════════════════════════════════════
-  // AUTO-POLLING (Only orders, every 30 seconds)
+  // AUTO-POLLING (Orders every 5s, instant on tab focus)
   // ═══════════════════════════════════════════
 
   // Initial load — all data once
@@ -208,10 +208,29 @@ const AdminDashboard = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Poll only orders every 30 seconds (lightweight, with mutex guard)
+  // Poll orders every 5 seconds for near-real-time updates
+  // Pauses when tab is hidden, resumes + instant poll on tab focus
   useEffect(() => {
-    const interval = setInterval(loadOrders, 30000);
-    return () => clearInterval(interval);
+    let interval = setInterval(loadOrders, 5000);
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        // Tab became visible — poll immediately and restart fast interval
+        loadOrders();
+        clearInterval(interval);
+        interval = setInterval(loadOrders, 5000);
+      } else {
+        // Tab hidden — pause polling to save resources
+        clearInterval(interval);
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
   }, [loadOrders]);
 
   // Save sound preference

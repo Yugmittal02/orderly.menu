@@ -41,6 +41,7 @@ const Payment = () => {
   const passedOrderType = location.state?.orderType;
   const orderType = passedOrderType || "Takeaway";
   const deliveryAddress = location.state?.deliveryAddress || null;
+  const customerNote = location.state?.customerNote || "";
 
   const [loading, setLoading] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState("Razorpay");
@@ -312,6 +313,7 @@ const Payment = () => {
         orderType,
         deliveryAddress: orderType === "Delivery" ? deliveryAddress : undefined,
         deliveryFee,
+        customerNote: customerNote || undefined,
       };
 
       const response = await createOrder(orderData);
@@ -700,7 +702,7 @@ const Payment = () => {
         items={cart}
         orderType={orderType}
         deliveryAddress={deliveryAddress}
-        customerNote=""
+        customerNote={customerNote}
       />
 
 

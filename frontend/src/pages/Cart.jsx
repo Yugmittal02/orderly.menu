@@ -14,8 +14,9 @@ const Cart = () => {
   const { cart, removeFromCart, updateQuantity, total, clearCart } = useCart();
   const { customer } = useAuth();
   const [orderType, setOrderType] = useState('Delivery');
-  const [manualAddress, setManualAddress] = useState('');
-  const [landmark, setLandmark] = useState('');
+  const [manualAddress, setManualAddress] = useState(() => sessionStorage.getItem('delivery_address') || '');
+  const [landmark, setLandmark] = useState(() => sessionStorage.getItem('delivery_landmark') || '');
+  const [customerNote, setCustomerNote] = useState('');
   const [feeSettings, setFeeSettings] = useState({ deliveryFeeBase: 30, freeDeliveryThreshold: 500 });
 
   useEffect(() => {
@@ -50,10 +51,15 @@ const Cart = () => {
       landmark: landmark.trim() || undefined,
     } : null;
 
+    // Save address to sessionStorage for persistence
+    sessionStorage.setItem('delivery_address', manualAddress.trim());
+    sessionStorage.setItem('delivery_landmark', landmark.trim());
+
     navigate('/payment', {
       state: {
         orderType,
         deliveryAddress,
+        customerNote: customerNote.trim() || undefined,
         subtotal: Number(total) || 0,
         deliveryFee: Number(deliveryFee) || 0,
         grandTotal: Number(grandTotal) || 0
@@ -226,6 +232,25 @@ const Cart = () => {
         })}
       </div>
 
+      {/* Customer Note */}
+      <div className="mx-4 mt-4 p-4 rounded-2xl"
+        style={{ background: 'white', border: '2px solid #E8E3DB', boxShadow: '0 4px 16px rgba(28, 28, 28, 0.06)' }}>
+        <div className="flex items-center gap-2 mb-3">
+          <span className="text-lg">📝</span>
+          <span className="font-bold" style={{ color: '#1C1C1C' }}>Special Instructions</span>
+          <span className="text-xs" style={{ color: '#A0998F' }}>(optional)</span>
+        </div>
+        <textarea
+          value={customerNote}
+          onChange={(e) => setCustomerNote(e.target.value)}
+          placeholder="e.g., Extra icing, no nuts, write 'Happy Birthday' on cake..."
+          rows={2}
+          maxLength={200}
+          className="w-full p-3 rounded-xl text-sm border-2 focus:outline-none focus:ring-2 focus:ring-[#C97B4B]/30 transition-all resize-none"
+          style={{ background: '#FAF7F2', border: '2px solid #E8E3DB', color: '#1C1C1C' }}
+        />
+        <p className="text-right text-[10px] mt-1" style={{ color: '#A0998F' }}>{customerNote.length}/200</p>
+      </div>
 
       {/* Bill Summary */}
       <div className="mx-4 mt-4 p-4 rounded-2xl"

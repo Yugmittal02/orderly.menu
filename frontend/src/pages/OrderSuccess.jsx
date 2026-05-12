@@ -94,11 +94,26 @@ const OrderSuccess = () => {
   const [orderData, setOrderData] = useState(null);
   const [orderStatus, setOrderStatus] = useState("Pending");
   const [isAccepted, setIsAccepted] = useState(false);
+  const prevStatusRef = useRef("Pending");
+
+  // Vibrate on status change (mobile haptic feedback)
+  const notifyStatusChange = (newStatus) => {
+    if (newStatus !== prevStatusRef.current && prevStatusRef.current) {
+      prevStatusRef.current = newStatus;
+      // Vibrate pattern: short for accepted, longer for ready/delivered
+      if (navigator.vibrate) {
+        if (newStatus === 'Delivered') navigator.vibrate([100, 50, 100, 50, 200]);
+        else if (newStatus === 'Ready') navigator.vibrate([100, 50, 200]);
+        else navigator.vibrate(100);
+      }
+    }
+  };
 
   // Cancellation countdown state
   const [cancelCountdown, setCancelCountdown] = useState(30);
   const [canCancel, setCanCancel] = useState(true);
   const [isCancelling, setIsCancelling] = useState(false);
+  const cancelTimerInitialized = useRef(false);
 
   // Rating state
   const [showRating, setShowRating] = useState(false);
@@ -153,6 +168,18 @@ const OrderSuccess = () => {
           setOrderData(data);
           setOrderStatus(data.status);
           setIsAccepted(data.isAccepted || false);
+          notifyStatusChange(data.status);
+
+          // Initialize cancel countdown from server timestamp (only once)
+          if (!cancelTimerInitialized.current && data.createdAt) {
+            cancelTimerInitialized.current = true;
+            const elapsed = Math.floor((Date.now() - new Date(data.createdAt).getTime()) / 1000);
+            const remaining = Math.max(0, 30 - elapsed);
+            setCancelCountdown(remaining);
+            if (remaining <= 0 || data.isAccepted || data.status !== "Pending") {
+              setCanCancel(false);
+            }
+          }
 
           // Disable cancel if order is accepted or status changed
           if (data.isAccepted || data.status !== "Pending") {
