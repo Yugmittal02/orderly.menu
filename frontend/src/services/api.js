@@ -1,180 +1,98 @@
 import axios from "axios";
 
-// Use localhost in development, production URL otherwise
-const isLocalhost = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
-const API_BASE_URL = isLocalhost
-  ? "http://localhost:5000/api"
-  : "https://api.sewashubhambakery.com/api";
+const API = axios.create({ baseURL: "/api" });
 
-const API = axios.create({
-  baseURL: API_BASE_URL,
-});
-
-// Admin-only API routes that ALWAYS require admin token (regardless of method)
-const ADMIN_ONLY_ROUTES = [
-  '/orders/all', '/orders/reset-all',
-  '/products/all',
-  '/upload', '/ratings/all',
-  '/settings/upi/admin', '/settings/homepage-badges',
-  '/payments/manual-verify',
-];
-
-// Routes that need admin token only for write operations (POST/PUT/DELETE)
-const ADMIN_WRITE_ROUTES = [
-  '/products', '/categories', '/offers',
-  '/settings/store', '/settings/upi', '/settings/fees',
-  '/settings/change-password',
-];
-
-const isAdminRoute = (url, method) => {
-  // PUT/DELETE on orders (status, accept, verify-payment) are admin routes
-  if (/\/orders\/[a-f0-9]+\/(status|accept|verify-payment)/.test(url)) return true;
-  // Always-admin routes
-  if (ADMIN_ONLY_ROUTES.some(route => url?.includes(route))) return true;
-  // Write-only admin routes (POST, PUT, DELETE, PATCH)
-  if (method !== 'get' && ADMIN_WRITE_ROUTES.some(route => url?.includes(route))) return true;
-  return false;
-};
-
-// Interceptor to add the correct token based on the route
+// Token interceptor — cafe-owner /cafes/me routes must use cafeToken, not superAdminToken
 API.interceptors.request.use((req) => {
-  const adminToken = localStorage.getItem("adminToken");
-  const customerToken = localStorage.getItem("customerToken");
+  const cafeToken = localStorage.getItem("cafeToken");
+  const adminToken = localStorage.getItem("superAdminToken");
   const url = req.url || '';
-  const method = (req.method || 'get').toLowerCase();
+  const isCafeOwnerCafeRoute = url.includes('/cafes/me') || url.includes('/cafes/public');
+  const useAdminToken =
+    adminToken &&
+    !isCafeOwnerCafeRoute &&
+    (url.includes('/auth/superadmin') || url.includes('/cafes'));
 
-  if (adminToken && isAdminRoute(url, method)) {
+  if (useAdminToken) {
     req.headers.Authorization = `Bearer ${adminToken}`;
-  } else if (customerToken) {
-    req.headers.Authorization = `Bearer ${customerToken}`;
-  } else if (adminToken) {
-    req.headers.Authorization = `Bearer ${adminToken}`;
+  } else if (cafeToken) {
+    req.headers.Authorization = `Bearer ${cafeToken}`;
   }
   return req;
 });
 
-// Interceptor to handle expired/invalid tokens
+// Handle expired tokens — clear storage and redirect to login
 API.interceptors.response.use(
   (res) => res,
   (error) => {
-    const url = error.config?.url || '';
-    const method = (error.config?.method || 'get').toLowerCase();
     if (error.response?.status === 401) {
-      if (isAdminRoute(url, method)) {
-        // Stale admin token — clear it so it doesn't block customer routes
-        localStorage.removeItem('adminToken');
-        localStorage.removeItem('admin');
-      } else if (error.response?.data?.message === 'Invalid Token') {
-        localStorage.removeItem('customerToken');
-        localStorage.removeItem('customer');
-        sessionStorage.removeItem('customer');
-        sessionStorage.removeItem('customerToken');
+      const url = error.config?.url || '';
+      if (url.includes('/cafes') || url.includes('/auth/superadmin')) {
+        localStorage.removeItem('superAdminToken');
+        localStorage.removeItem('superAdmin');
+        if (!window.location.pathname.includes('/admin/login')) {
+          window.location.href = '/admin/login';
+        }
+      } else {
+        localStorage.removeItem('cafeToken');
+        localStorage.removeItem('cafeUser');
+        if (!window.location.pathname.includes('/cafe/login')) {
+          window.location.href = '/cafe/login';
+        }
       }
     }
     return Promise.reject(error);
   }
 );
 
-// Auth
-export const registerCustomer = (data) => API.post("/auth/customer", data);
-export const adminLogin = (data) => API.post("/auth/admin/login", data);
+// ============ AUTH ============
+export const superAdminLogin = (data) => API.post("/auth/superadmin/login", data);
+export const cafeOwnerLogin = (data) => API.post("/auth/cafe/login", data);
 
-// Products
-export const fetchProducts = (category) =>
-  API.get(`/products${category ? `?category=${category}` : ""}`);
-export const fetchProductBySlug = (slug) =>
-  API.get(`/products/slug/${slug}`);
-export const createProduct = (data) => API.post("/products", data);
-export const updateProduct = (id, data) => API.put(`/products/${id}`, data);
-export const deleteProduct = (id) => API.delete(`/products/${id}`);
-export const toggleProductAvailability = (id) =>
-  API.patch(`/products/${id}/toggle-availability`);
-export const deleteAllProducts = () => API.delete("/products/all");
+// ============ CAFES (SuperAdmin) ============
+export const createCafe = (data) => API.post("/cafes", data);
+export const getAllCafes = () => API.get("/cafes");
+export const updateCafe = (id, data) => API.put(`/cafes/${id}`, data);
+export const toggleCafeStatus = (id) => API.patch(`/cafes/${id}/toggle`);
+export const deleteCafe = (id) => API.delete(`/cafes/${id}`);
 
-// Orders
-export const createOrder = (data) => API.post("/orders", data);
-export const fetchOrderStatus = (id) => API.get(`/orders/track/${id}`);
-export const fetchMyOrders = () => API.get("/orders/my-orders");
-export const fetchAllOrders = () => API.get("/orders/all");
-export const updateOrderStatus = (id, status) =>
-  API.put(`/orders/${id}/status`, { status });
-export const acceptOrder = (id) => API.put(`/orders/${id}/accept`);
-export const cancelOrder = (id) => API.put(`/orders/${id}/cancel`);
-export const resetAllOrders = (password) =>
-  API.delete("/orders/reset-all", { data: { password } });
+// ============ CAFE OWNER ============
+export const getMyCafe = () => API.get("/cafes/me");
+export const updateMyCafe = (data) => API.put("/cafes/me/update", data);
+export const changeCafePassword = (data) => API.put("/cafes/me/password", data);
 
-// Ratings
-export const submitRating = (data) => API.post("/ratings", data);
-export const fetchProductRatings = (productId) =>
-  API.get(`/ratings/product/${productId}`);
-export const fetchAllRatings = () => API.get("/ratings/all");
+// ============ CAFE PUBLIC ============
+export const getPublicCafe = (cafeId) => API.get(`/cafes/public/${cafeId}`);
 
-// Upload
+// ============ MENU ============
+export const getPublicMenu = (cafeId) => API.get(`/menu/cafe/${cafeId}`);
+export const getMenuCategories = (cafeId) => API.get(`/menu/cafe/${cafeId}/categories`);
+export const getMyMenu = () => API.get("/menu/my");
+export const addMenuItem = (data) => API.post("/menu", data);
+export const updateMenuItem = (id, data) => API.put(`/menu/${id}`, data);
+export const deleteMenuItem = (id) => API.delete(`/menu/${id}`);
+export const toggleMenuItemAvailability = (id) => API.patch(`/menu/${id}/toggle`);
+
+// ============ ORDERS ============
+export const placeOrder = (data) => API.post("/orders", data);
+export const trackOrder = (orderNumber) => API.get(`/orders/track/${orderNumber}`);
+export const getCafeOrders = (params) => API.get("/orders/cafe", { params });
+export const updateOrderStatus = (id, status) => API.put(`/orders/${id}/status`, { status });
+export const getCafeStats = (params) => API.get("/orders/cafe/stats", { params });
+export const markOrderPaid = (id, paymentMethod) => API.patch(`/orders/${id}/payment`, { paymentMethod });
+
+// ============ UPLOAD ============
 export const uploadImage = (formData) =>
-  API.post("/upload/upload", formData, {
+  API.post("/upload", formData, {
     headers: { "Content-Type": "multipart/form-data" },
   });
 
-// Settings
-export const getUPISettings = () => API.get("/settings/upi");
-export const getUPISettingsAdmin = () => API.get("/settings/upi/admin");
-export const updateUPISettings = (data) => API.put("/settings/upi", data);
-export const getStoreSettings = () => API.get("/settings/store");
-export const updateStoreSettings = (data) => API.put("/settings/store", data);
-export const verifySettingsPassword = (password, type) =>
-  API.post("/settings/verify-password", { password, type });
-export const changeSettingsPassword = (data) =>
-  API.put("/settings/change-password", data);
-
-// Fee Settings
-export const getFeeSettings = () => API.get("/settings/fees");
-export const updateFeeSettings = (data) => API.put("/settings/fees", data);
-export const calculateDeliveryFee = (customerLat, customerLng, orderTotal) =>
-  API.post("/settings/calculate-delivery", { customerLat, customerLng, orderTotal });
-
-// Homepage Badges
-export const getHomepageBadges = () => API.get("/settings/homepage-badges");
-export const updateHomepageBadges = (badges) => API.put("/settings/homepage-badges", { badges });
-
-// Payments (Razorpay)
-export const getRazorpayKey = () => API.get("/payments/key");
-export const createPaymentOrder = (data) =>
-  API.post("/payments/create-order", data);
-export const verifyPayment = (data) => API.post("/payments/verify", data);
-export const getPaymentStatus = (orderId) =>
-  API.get(`/payments/status/${orderId}`);
-export const manualVerifyPayment = (orderId, data) =>
-  API.put(`/payments/manual-verify/${orderId}`, data);
-
-// Payment Screenshot (for manual UPI verification)
-export const uploadPaymentScreenshot = (orderId, screenshotUrl) =>
-  API.put(`/orders/${orderId}/screenshot`, { screenshotUrl });
-export const verifyPaymentScreenshotAdmin = (orderId, verified) =>
-  API.put(`/orders/${orderId}/verify-payment`, { verified });
-
-// Cart sync
-export const syncCartToDB = (cart) => API.put("/auth/cart", { cart });
-export const getCartFromDB = () => API.get("/auth/cart");
-
-// Activity log
-export const logUserActivity = (data) => API.post("/auth/activity", data);
-export const getUserActivity = () => API.get("/auth/activity");
-
-// Categories
-export const fetchCategories = () => API.get("/categories");
-export const fetchCategoryBySlug = (slug) => API.get(`/categories/${slug}`);
-export const createCategory = (data) => API.post("/categories", data);
-export const updateCategory = (id, data) => API.put(`/categories/${id}`, data);
-export const deleteCategory = (id) => API.delete(`/categories/${id}`);
-
-// Offers
-export const fetchAllOffers = () => API.get("/offers");
-export const fetchActiveOffers = () => API.get("/offers/active");
-export const createOffer = (data) => API.post("/offers", data);
-export const updateOffer = (id, data) => API.put(`/offers/${id}`, data);
-export const toggleOffer = (id) => API.patch(`/offers/${id}/toggle`);
-export const deleteOffer = (id) => API.delete(`/offers/${id}`);
+// ============ COUPONS ============
+export const createCoupon = (data) => API.post("/coupons", data);
+export const getMyCoupons = () => API.get("/coupons");
+export const updateCoupon = (id, data) => API.put(`/coupons/${id}`, data);
+export const deleteCoupon = (id) => API.delete(`/coupons/${id}`);
+export const toggleCouponStatus = (id) => API.patch(`/coupons/${id}/toggle`);
+export const validateCoupon = (data) => API.post("/coupons/validate", data);
 
 export default API;
-
-

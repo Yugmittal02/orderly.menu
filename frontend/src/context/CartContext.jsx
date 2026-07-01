@@ -1,12 +1,10 @@
-import React, { createContext, useState, useContext, useEffect, useRef } from "react";
-import { syncCartToDB, getCartFromDB } from "../services/api";
+import React, { createContext, useState, useContext, useEffect } from "react";
 
 const CartContext = createContext();
 
-// Helper to safely parse JSON from localStorage
-const getStoredCart = () => {
+const getStoredCart = (cafeId) => {
   try {
-    const stored = localStorage.getItem("sewashubham_cart");
+    const stored = localStorage.getItem(`qrmenu_cart_${cafeId}`);
     return stored ? JSON.parse(stored) : [];
   } catch {
     return [];
@@ -14,139 +12,105 @@ const getStoredCart = () => {
 };
 
 export const CartProvider = ({ children }) => {
-  const [cart, setCart] = useState(() => getStoredCart());
-  const [total, setTotal] = useState(0);
-  const syncTimeoutRef = useRef(null);
-  const hasLoadedFromDB = useRef(false);
+  const [cart, setCart] = useState([]);
+  const [cafeId, setCafeId] = useState('');
+  const [subtotal, setSubtotal] = useState(0);
+  const [coupon, setCoupon] = useState(null); // { code, type, value, discount, message }
+  const [discount, setDiscount] = useState(0);
 
-  // Calculate total whenever cart changes
+  // Calculate subtotal
   useEffect(() => {
-    const newTotal = cart.reduce(
-      (sum, item) => {
-        const itemPrice = Number(item.price) || Number(item.basePrice) || 0;
-        const itemQty = Number(item.quantity) || 1;
-        return sum + (itemPrice * itemQty);
-      },
-      0,
-    );
-    setTotal(newTotal);
+    const newSubtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    setSubtotal(newSubtotal);
   }, [cart]);
 
-  // Persist cart to localStorage whenever it changes
+  // Recalculate discount when subtotal or coupon changes
   useEffect(() => {
-    try {
-      localStorage.setItem("sewashubham_cart", JSON.stringify(cart));
-    } catch (e) {
-      console.error("Failed to save cart to localStorage:", e);
+    if (coupon) {
+      let d = 0;
+      if (coupon.type === 'percentage') {
+        d = Math.round((subtotal * coupon.value) / 100);
+        if (coupon.maxDiscount > 0) d = Math.min(d, coupon.maxDiscount);
+      } else {
+        d = coupon.value;
+      }
+      d = Math.min(d, subtotal);
+      setDiscount(d);
+    } else {
+      setDiscount(0);
     }
-  }, [cart]);
+  }, [subtotal, coupon]);
 
-  // Debounced sync to DB (only if user is logged in)
+  const total = subtotal - discount;
+
+  // Persist cart
   useEffect(() => {
-    if (!hasLoadedFromDB.current) return; // Don't sync before initial load
+    if (cafeId) {
+      localStorage.setItem(`qrmenu_cart_${cafeId}`, JSON.stringify(cart));
+    }
+  }, [cart, cafeId]);
 
-    const token = localStorage.getItem("customerToken");
-    if (!token) return;
-
-    // Debounce: wait 1s after last change before syncing
-    if (syncTimeoutRef.current) clearTimeout(syncTimeoutRef.current);
-    syncTimeoutRef.current = setTimeout(() => {
-      syncCartToDB(cart).catch(err => {
-        if (err.response?.status === 401 || err.response?.status === 400) return;
-        console.error("Cart sync error:", err);
-      });
-    }, 1000);
-
-    return () => {
-      if (syncTimeoutRef.current) clearTimeout(syncTimeoutRef.current);
-    };
-  }, [cart]);
-
-  // Load cart from DB on mount if user is logged in
-  useEffect(() => {
-    const loadCartFromDB = async () => {
-      const token = localStorage.getItem("customerToken");
-      if (!token) {
-        hasLoadedFromDB.current = true;
-        return;
-      }
-
-      try {
-        const { data } = await getCartFromDB();
-        if (data && data.length > 0) {
-          // Merge: DB cart takes priority, but also keep any localStorage items not in DB
-          const localCart = getStoredCart();
-          const dbCartIds = new Set(data.map(item => item.cartId));
-          const uniqueLocal = localCart.filter(item => !dbCartIds.has(item.cartId));
-          const merged = [...data, ...uniqueLocal];
-          setCart(merged);
-        }
-      } catch (err) {
-        if (err.response?.status !== 401 && err.response?.status !== 400) {
-          console.error("Failed to load cart from DB:", err);
-        }
-      }
-      hasLoadedFromDB.current = true;
-    };
-
-    loadCartFromDB();
-  }, []);
-
-  const addToCart = (item) => {
-    const cartItem = {
-      ...item,
-      cartId: `${item._id}-${item.size || "default"}-${(item.selectedAddons || []).join("-")}-${Date.now()}`,
-      quantity: 1,
-    };
-    setCart((prev) => [...prev, cartItem]);
+  const initCart = (newCafeId) => {
+    setCafeId(newCafeId);
+    setCart(getStoredCart(newCafeId));
+    setCoupon(null);
+    setDiscount(0);
   };
 
-  const updateQuantity = (cartId, delta) => {
+  const addToCart = (item) => {
+    setCart((prev) => {
+      const existingIndex = prev.findIndex(i => i.menuItemId === item.menuItemId);
+      if (existingIndex >= 0) {
+        const updated = [...prev];
+        updated[existingIndex].quantity += 1;
+        return updated;
+      }
+      return [...prev, { ...item, quantity: 1 }];
+    });
+  };
+
+  const updateQuantity = (menuItemId, delta) => {
     setCart((prev) =>
       prev
         .map((item) => {
-          if (item.cartId === cartId) {
+          if (item.menuItemId === menuItemId) {
             const newQty = item.quantity + delta;
             return newQty > 0 ? { ...item, quantity: newQty } : null;
           }
           return item;
         })
-        .filter(Boolean),
+        .filter(Boolean)
     );
   };
 
-  const removeFromCart = (cartId) => {
-    setCart((prev) => prev.filter((item) => item.cartId !== cartId));
+  const removeFromCart = (menuItemId) => {
+    setCart((prev) => prev.filter((item) => item.menuItemId !== menuItemId));
   };
 
   const clearCart = () => {
     setCart([]);
-    try {
-      localStorage.removeItem("sewashubham_cart");
-    } catch (e) {
-      console.error("Failed to clear cart from localStorage:", e);
-    }
-    // Also clear in DB
-    const token = localStorage.getItem("customerToken");
-    if (token) {
-      syncCartToDB([]).catch(err => console.error("Cart clear sync error:", err));
-    }
+    setCoupon(null);
+    setDiscount(0);
+    if (cafeId) localStorage.removeItem(`qrmenu_cart_${cafeId}`);
+  };
+
+  const applyCoupon = (couponData) => {
+    setCoupon(couponData);
+  };
+
+  const removeCoupon = () => {
+    setCoupon(null);
+    setDiscount(0);
   };
 
   const getItemCount = () => cart.reduce((sum, item) => sum + item.quantity, 0);
 
   return (
-    <CartContext.Provider
-      value={{
-        cart,
-        total,
-        addToCart,
-        updateQuantity,
-        removeFromCart,
-        clearCart,
-        getItemCount,
-      }}
-    >
+    <CartContext.Provider value={{
+      cart, subtotal, discount, total, coupon, cafeId,
+      initCart, addToCart, updateQuantity, removeFromCart, clearCart,
+      getItemCount, applyCoupon, removeCoupon
+    }}>
       {children}
     </CartContext.Provider>
   );
